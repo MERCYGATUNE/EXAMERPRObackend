@@ -3,7 +3,8 @@ from flask_cors import CORS
 from models import db, migrate, User
 import uuid
 from datetime import datetime
-import bcrypt  # Ensure bcrypt is installed: `pip install bcrypt`
+import bcrypt  
+
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
