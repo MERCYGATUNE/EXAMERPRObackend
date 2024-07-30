@@ -1,202 +1,207 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Float, Text, Boolean, DateTime
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
 import uuid
+from datetime import datetime
 
-Base = declarative_base()
+db = SQLAlchemy()
 
-class User(Base):
+class User(db.Model):
     __tablename__ = 'users'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email = Column(String, nullable=False)
-    password = Column(String, nullable=False)
-    confirmed_email = Column(Boolean, default=False)
-    role = Column(String)
-    referral_code = Column(String)
-    created_at = Column(DateTime)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email = db.Column(db.String, nullable=False, unique=True)
+    password = db.Column(db.String, nullable=False)
+    confirmed_email = db.Column(db.Boolean, default=False)
+    role = db.Column(db.String)
+    referral_code = db.Column(db.String, unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    profile = relationship("Profile", back_populates="user")
-    notifications = relationship("Notification", back_populates="user")
-    subscriptions = relationship("Subscription", back_populates="user")
-    payments = relationship("Payment", back_populates="user")
-    scores = relationship("Score", back_populates="user")
-    resources = relationship("Resource", back_populates="user")
+    profile = db.relationship("Profile", back_populates="user", uselist=False)
+    notifications = db.relationship("Notification", back_populates="user")
+    subscriptions = db.relationship("Subscription", back_populates="user")
+    payments = db.relationship("Payment", back_populates="user")
+    scores = db.relationship("Score", back_populates="user")
+    resources = db.relationship("Resource", back_populates="user")
 
-class Profile(Base):
-    __tablename__ = 'profile'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
-    first_name = Column(String)
-    last_name = Column(String)
-    photo_url = Column(String)
-    title = Column(String)
-    created_at = Column(DateTime)
+class Profile(db.Model):
+    __tablename__ = 'profiles'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), unique=True)
+    first_name = db.Column(db.String)
+    last_name = db.Column(db.String)
+    photo_url = db.Column(db.String)
+    title = db.Column(db.String)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    user = relationship("User", back_populates="profile")
+    user = db.relationship("User", back_populates="profile")
 
-class Notification(Base):
-    __tablename__ = 'notification'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
-    subject = Column(String)
-    body = Column(Text)
-    sender_id = Column(UUID(as_uuid=True))
-    sender_name = Column(String)
-    created_at = Column(DateTime)
-    user = relationship("User", back_populates="notifications")
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+    subject = db.Column(db.String)
+    body = db.Column(db.Text)
+    sender_id = db.Column(UUID(as_uuid=True))
+    sender_name = db.Column(db.String)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Subscription(Base):
-    __tablename__ = 'subscription'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    type = Column(String)
-    amount = Column(Float)
-    created_at = Column(DateTime)
-    expires_at = Column(DateTime)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
-    user = relationship("User", back_populates="subscriptions")
+    user = db.relationship("User", back_populates="notifications")
 
-class Payment(Base):
-    __tablename__ = 'payment'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
-    subscription_id = Column(UUID(as_uuid=True))
-    amount = Column(Float)
-    expires_at = Column(DateTime)
-    payment_type = Column(String)
-    created_at = Column(DateTime)
-    user = relationship("User", back_populates="payments")
+class Subscription(db.Model):
+    __tablename__ = 'subscriptions'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    type = db.Column(db.String)
+    amount = db.Column(db.Float)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
 
-class Score(Base):
-    __tablename__ = 'score'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
-    topic_id = Column(UUID(as_uuid=True))
-    possible_score = Column(Float)
-    user_score = Column(Float)
-    completion_rate = Column(Float)
-    created_at = Column(DateTime)
-    user = relationship("User", back_populates="scores")
+    user = db.relationship("User", back_populates="subscriptions")
 
-class Resource(Base):
-    __tablename__ = 'resource'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    topic_id = Column(UUID(as_uuid=True))
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
-    resource_type = Column(String)
-    short_desc = Column(String)
-    details = Column(Text)
-    created_at = Column(DateTime)
-    user = relationship("User", back_populates="resources")
+class Payment(db.Model):
+    __tablename__ = 'payments'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+    subscription_id = db.Column(UUID(as_uuid=True))
+    amount = db.Column(db.Float)
+    expires_at = db.Column(db.DateTime)
+    payment_type = db.Column(db.String)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Referral(Base):
-    __tablename__ = 'referral'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    referral_code = Column(String)
-    points_earned = Column(Integer)
-    redeemed = Column(Boolean)
+    user = db.relationship("User", back_populates="payments")
 
-class AnswerMetadata(Base):
-    __tablename__ = 'answermetadata'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    description = Column(Text)
-    supporting_image = Column(String)
-    answer_id = Column(UUID(as_uuid=True))
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
+class Score(db.Model):
+    __tablename__ = 'scores'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+    topic_id = db.Column(UUID(as_uuid=True))
+    possible_score = db.Column(db.Float)
+    user_score = db.Column(db.Float)
+    completion_rate = db.Column(db.Float)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Questions(Base):
+    user = db.relationship("User", back_populates="scores")
+
+class Resource(db.Model):
+    __tablename__ = 'resources'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    topic_id = db.Column(UUID(as_uuid=True))
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+    resource_type = db.Column(db.String)
+    short_desc = db.Column(db.String)
+    details = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", back_populates="resources")
+
+class Referral(db.Model):
+    __tablename__ = 'referrals'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    referral_code = db.Column(db.String, unique=True)
+    points_earned = db.Column(db.Integer)
+    redeemed = db.Column(db.Boolean, default=False)
+
+class AnswerMetadata(db.Model):
+    __tablename__ = 'answer_metadata'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    description = db.Column(db.Text)
+    supporting_image = db.Column(db.String)
+    answer_id = db.Column(UUID(as_uuid=True))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Question(db.Model):
     __tablename__ = 'questions'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question = Column(Text)
-    topic_id = Column(UUID(as_uuid=True))
-    mode = Column(String)
-    exam_mode = Column(String)
-    created_at = Column(DateTime)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question = db.Column(db.Text)
+    topic_id = db.Column(UUID(as_uuid=True))
+    mode = db.Column(db.String)
+    exam_mode = db.Column(db.String)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Answers(Base):
+class Answer(db.Model):
     __tablename__ = 'answers'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'))
-    answer_type = Column(String)
-    answer = Column(Text)
-    created_at = Column(DateTime)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_id = db.Column(UUID(as_uuid=True), db.ForeignKey('questions.id'))
+    answer_type = db.Column(db.String)
+    answer = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class UserAnswers(Base):
-    __tablename__ = 'useranswers'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'))
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
-    answer_type = Column(String)
-    answer = Column(Text)
-    attempts = Column(Integer)
+class UserAnswer(db.Model):
+    __tablename__ = 'user_answers'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_id = db.Column(UUID(as_uuid=True), db.ForeignKey('questions.id'))
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+    answer_type = db.Column(db.String)
+    answer = db.Column(db.Text)
+    attempts = db.Column(db.Integer)
 
-class UserParagraph(Base):
-    __tablename__ = 'userparagraph'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'))
-    paragraph = Column(Text)
-    answer_id = Column(UUID(as_uuid=True))
+class UserParagraph(db.Model):
+    __tablename__ = 'user_paragraphs'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_id = db.Column(UUID(as_uuid=True), db.ForeignKey('questions.id'))
+    paragraph = db.Column(db.Text)
+    answer_id = db.Column(UUID(as_uuid=True))
 
-class UserChoice(Base):
-    __tablename__ = 'userchoice'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'))
-    choice = Column(Text)
-    answer_id = Column(UUID(as_uuid=True))
+class UserChoice(db.Model):
+    __tablename__ = 'user_choices'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_id = db.Column(UUID(as_uuid=True), db.ForeignKey('questions.id'))
+    choice = db.Column(db.Text)
+    answer_id = db.Column(UUID(as_uuid=True))
 
-class Topic(Base):
-    __tablename__ = 'topic'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String)
-    description = Column(Text)
-    user_id = Column(UUID(as_uuid=True))
-    sub_category_id = Column(UUID(as_uuid=True))
+class Topic(db.Model):
+    __tablename__ = 'topics'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String)
+    description = db.Column(db.Text)
+    user_id = db.Column(UUID(as_uuid=True))
+    sub_category_id = db.Column(UUID(as_uuid=True))
 
-class SubCategory(Base):
-    __tablename__ = 'subcategory'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String)
-    description = Column(Text)
-    user_id = Column(UUID(as_uuid=True))
-    exam_category_id = Column(UUID(as_uuid=True))
+class SubCategory(db.Model):
+    __tablename__ = 'sub_categories'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String)
+    description = db.Column(db.Text)
+    user_id = db.Column(UUID(as_uuid=True))
+    exam_category_id = db.Column(UUID(as_uuid=True))
 
-class ExamCategory(Base):
-    __tablename__ = 'examcategory'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String)
-    description = Column(Text)
-    user_id = Column(UUID(as_uuid=True))
+class ExamCategory(db.Model):
+    __tablename__ = 'exam_categories'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String)
+    description = db.Column(db.Text)
+    user_id = db.Column(UUID(as_uuid=True))
 
-class Choice(Base):
-    __tablename__ = 'choice'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    choice = Column(Text)
-    answer_id = Column(UUID(as_uuid=True))
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
+class Choice(db.Model):
+    __tablename__ = 'choices'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    choice = db.Column(db.Text)
+    answer_id = db.Column(UUID(as_uuid=True))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-class Paragraph(Base):
-    __tablename__ = 'paragraph'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    paragraph = Column(Text)
-    answer_id = Column(UUID(as_uuid=True))
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
-class Comment(Base):
-    __tablename__ = 'comment'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'), nullable=False)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    description = Column(Text, nullable=False)
-    created_at = Column(DateTime, nullable=False)
-    updated_at = Column(DateTime, nullable=True)
+class Paragraph(db.Model):
+    __tablename__ = 'paragraphs'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    paragraph = db.Column(db.Text)
+    answer_id = db.Column(UUID(as_uuid=True))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-class PasswordReset(Base):
-    __tablename__ = 'password_reset'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    request_triggered = Column(Boolean, nullable=False, default=False)
-    request_satisfied = Column(Boolean, nullable=False, default=False)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    created_at = Column(DateTime, nullable=False)
-    updated_at = Column(DateTime, nullable=True)
+class Comment(db.Model):
+    __tablename__ = 'comments'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_id = db.Column(UUID(as_uuid=True), db.ForeignKey('questions.id'))
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+    description = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=True, onupdate=datetime.utcnow)
+
+class PasswordReset(db.Model):
+    __tablename__ = 'password_resets'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    request_triggered = db.Column(db.Boolean, nullable=False, default=False)
+    request_satisfied = db.Column(db.Boolean, nullable=False, default=False)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=True, onupdate=datetime.utcnow)
