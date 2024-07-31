@@ -54,12 +54,22 @@ def login():
 
     user = User.query.filter_by(email=email).first()
     if user:
-        print(f"Stored hash: {user.password}")  # Debugging line
+        stored_password = user.password.encode('utf-8')
         try:
-            if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+            # Check if the stored password is a valid bcrypt hash
+            if bcrypt.checkpw(password.encode('utf-8'), stored_password):
                 return jsonify({'message': 'Login successful'}), 200
-        except ValueError as e:
-            print(f"ValueError: {e}")  # Additional debug information
+            else:
+                return jsonify({'error': 'Invalid email or password'}), 401
+        except ValueError:
+            # If the stored password is not a valid bcrypt hash, rehash it
+            hashed_password = bcrypt.hashpw(stored_password, bcrypt.gensalt())
+            user.password = hashed_password.decode('utf-8')
+            db.session.commit()
+            if bcrypt.checkpw(password.encode('utf-8'), hashed_password):
+                return jsonify({'message': 'Login successful'}), 200
+            else:
+                return jsonify({'error': 'Invalid email or password'}), 401
     return jsonify({'error': 'Invalid email or password'}), 401
 
 if __name__ == '__main__':
