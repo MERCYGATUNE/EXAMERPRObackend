@@ -3,12 +3,12 @@ from flask_cors import CORS
 from models import db, migrate, User
 import uuid
 from datetime import datetime
-import bcrypt  # Ensure bcrypt is installed: `pip install bcrypt`
+import bcrypt 
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
 
-# Enable CORS
+
 CORS(app)
 
 db.init_app(app)
@@ -23,7 +23,7 @@ def register():
     if not email or not password:
         return jsonify({'error': 'Email and password are required'}), 400
 
-    # Check if the email already exists
+    
     if User.query.filter_by(email=email).first():
         return jsonify({'error': 'Email already in use'}), 400
 
@@ -56,13 +56,13 @@ def login():
     if user:
         stored_password = user.password.encode('utf-8')
         try:
-            # Check if the stored password is a valid bcrypt hash
+          
             if bcrypt.checkpw(password.encode('utf-8'), stored_password):
                 return jsonify({'message': 'Login successful'}), 200
             else:
                 return jsonify({'error': 'Invalid email or password'}), 401
         except ValueError:
-            # If the stored password is not a valid bcrypt hash, rehash it
+            
             hashed_password = bcrypt.hashpw(stored_password, bcrypt.gensalt())
             user.password = hashed_password.decode('utf-8')
             db.session.commit()
