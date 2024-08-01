@@ -15,7 +15,7 @@ class User(db.Model):
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
     confirmed_email = Column(Boolean, default=False)
-    role = Column(String)
+    role = Column(String, default='user')
     referral_code = Column(String)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
