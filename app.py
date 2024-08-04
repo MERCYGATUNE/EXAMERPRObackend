@@ -5,16 +5,35 @@ import uuid
 from datetime import datetime, timedelta
 import bcrypt
 import stripe
+import logging
+from logging.handlers import RotatingFileHandler
+import os
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
 
-CORS(app)
+# Configure logging
+if not app.debug:
+    handler = RotatingFileHandler('error.log', maxBytes=10000, backupCount=1)
+    handler.setLevel(logging.INFO)
+    app.logger.addHandler(handler)
 
+# Initialize CORS
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Initialize database and migrations
 db.init_app(app)
 migrate.init_app(app, db)
 
-stripe.api_key = 'your-secret-key-here'
+# Load Stripe secret key from environment variable
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+
+def is_valid_uuid(uuid_to_test, version=4):
+    try:
+        uuid_obj = uuid.UUID(uuid_to_test, version=version)
+    except ValueError:
+        return False
+    return str(uuid_obj) == uuid_to_test
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -57,7 +76,10 @@ def login():
     if user:
         stored_password = user.password.encode('utf-8')
         if bcrypt.checkpw(password.encode('utf-8'), stored_password):
-            return jsonify({'message': 'Login successful'}), 200
+            return jsonify({
+                'message': 'Login successful',
+                'user_id': str(user.id)  # Return user ID
+            }), 200
         else:
             return jsonify({'error': 'Invalid email or password'}), 401
     return jsonify({'error': 'Invalid email or password'}), 401
@@ -65,31 +87,53 @@ def login():
 @app.route('/create-subscription', methods=['POST'])
 def create_subscription():
     data = request.get_json()
+    app.logger.info(f'Received data: {data}')
+    
     user_id = data.get('user_id')
     payment_method_id = data.get('payment_method_id')
     amount = data.get('amount')
 
-    if not user_id or not payment_method_id or not amount:
-        return jsonify({'error': 'User ID, payment method, and amount are required'}), 400
+    if not user_id:
+        app.logger.error('Missing user_id.')
+        return jsonify({'error': 'User ID is required'}), 400
 
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
+    if not payment_method_id:
+        app.logger.error('Missing payment_method_id.')
+        return jsonify({'error': 'Payment method ID is required'}), 400
+
+    if amount is None or amount < 50:  # Ensure minimum amount of 50 KSh
+        app.logger.error('Amount must be at least 50 KSh.')
+        return jsonify({'error': 'Amount must be at least 50 KSh'}), 400
+
+    if not is_valid_uuid(user_id):
+        app.logger.error(f'Invalid user ID: {user_id}')
+        return jsonify({'error': 'Invalid user ID'}), 400
 
     try:
-        # Create a Payment Intent
+        user_id = uuid.UUID(user_id)
+        user = User.query.get(user_id)
+        
+        if not user:
+            app.logger.error('User not found.')
+            return jsonify({'error': 'User not found'}), 404
+
+        # Create PaymentIntent with automatic payment methods enabled
         payment_intent = stripe.PaymentIntent.create(
-            amount=int(amount * 100),  # Stripe expects the amount in cents
-            currency='kes',  # Use 'kes' for Kenyan Shilling
+            amount=int(amount * 100),  # Convert KSh to cents
+            currency='kes',
             payment_method=payment_method_id,
             confirm=True,
+            automatic_payment_methods={
+                'enabled': True,
+                'allow_redirects': 'never',  # Change this to 'always' if needed
+            }
         )
+        app.logger.info(f'Payment Intent created: {payment_intent.id}')
 
-        # Create a new subscription
         new_subscription = Subscription(
             id=uuid.uuid4(),
             user_id=user_id,
-            type='premium',  # Adjust based on your subscription types
+            type='premium',
             amount=amount,
             created_at=datetime.utcnow(),
             expires_at=datetime.utcnow() + timedelta(days=30)
@@ -99,10 +143,13 @@ def create_subscription():
 
         return jsonify({'success': True, 'subscription_id': new_subscription.id}), 201
     except stripe.error.CardError as e:
+        app.logger.error(f'Card error: {str(e)}')
         return jsonify({'success': False, 'error': f'Card error: {str(e)}'}), 400
     except stripe.error.StripeError as e:
+        app.logger.error(f'Stripe error: {str(e)}')
         return jsonify({'success': False, 'error': 'Payment failed. Please try again.'}), 400
     except Exception as e:
+        app.logger.error(f'Exception occurred: {str(e)}')
         return jsonify({'success': False, 'error': 'An error occurred. Please try again later.'}), 500
 
 if __name__ == '__main__':
