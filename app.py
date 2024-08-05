@@ -8,9 +8,23 @@ import bcrypt
 import stripe
 from uuid import UUID
 
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 25
+app.config['MAIL_USERNAME'] = 'examerpro@gmail.com'
+app.config['MAIL_PASSWORD'] = 'aghu rdsk jxqa encf'
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+
+mail = Mail(app)
+def send_email(to, subject, body):
+    msg = Message(subject, sender="examerpro@gmail.com", recipients=[to])
+    msg.body = body
+    mail.send(msg)
 
 CORS(app)
 
@@ -44,6 +58,8 @@ def register():
     )
     db.session.add(new_user)
     db.session.commit()
+    send_email(email, 'ExamerPro™ - Successful Sign Up', 'Thank you for signing up!')
+    
 
     return jsonify({'message': 'User registered successfully'}), 201
 
@@ -60,6 +76,7 @@ def login():
     if user:
         stored_password = user.password.encode('utf-8')
         if bcrypt.checkpw(password.encode('utf-8'), stored_password):
+            send_email(email, 'Login Notification', 'You have logged in successfully!')
             return jsonify({'message': 'Login successful'}), 200
         else:
             return jsonify({'error': 'Invalid email or password'}), 401
@@ -496,4 +513,4 @@ def create_topic():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5555)
