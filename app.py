@@ -26,7 +26,13 @@ db.init_app(app)
 migrate.init_app(app, db)
 
 # Load Stripe secret key from environment variable
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+stripe_api_key = os.getenv('STRIPE_SECRET_KEY')
+
+if not stripe_api_key:
+    app.logger.error('STRIPE_SECRET_KEY environment variable not set')
+else:
+    stripe.api_key = stripe_api_key
+    app.logger.info('Stripe API key loaded successfully')
 
 def is_valid_uuid(uuid_to_test, version=4):
     try:
