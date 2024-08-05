@@ -1,5 +1,5 @@
-from flask import Flask, request, jsonify
-
+from flask import Flask, request, jsonify, url_for
+from itsdangerous import URLSafeTimedSerializer
 from flask_cors import CORS
 from models import db, migrate, User, Subscription,Questions,Answers,ExamCategory,SubCategory,Topic
 import uuid
@@ -12,6 +12,9 @@ from flask_mail import Mail, Message
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
+
+app.config['SECRET_KEY'] = 'jm$nh#.3!Vfp[Y7BE9qZ='
+app.config['SECURITY_PASSWORD_SALT'] = app.config['SECRET_KEY']
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 25
@@ -511,6 +514,47 @@ def create_topic():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+def generate_reset_token(email):
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    return serializer.dumps(email, salt=app.config['SECURITY_PASSWORD_SALT'])
+
+def verify_reset_token(token):
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    try:
+        email = serializer.loads(token, salt=app.config['SECURITY_PASSWORD_SALT'], max_age=3600)
+    except:
+        return None
+    return email
+
+@app.route('/reset_password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    email = data['email']
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    token = generate_reset_token(email)
+    reset_url = reset_url = f"http://localhost:3000/reset-password/{token}"
+    send_email(email, 'Password Reset Request', f'Click the link to reset your password: {reset_url} \n You have exactly 1 hour to reset this password \n \n Ignore this email if you did not initialize this.')
+
+    return jsonify({"message": "Password reset email sent."}), 200
+
+@app.route('/reset_password/<token>', methods=['POST'])
+def reset_with_token(token):
+    email = verify_reset_token(token)
+    if not email:
+        return jsonify({"message": "Invalid or expired token"}), 400
+    
+    data = request.get_json()
+    new_password = data['new_password']
+    user = User.query.filter_by(email=email).first()
+    if user:
+        new_hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+        user.password = new_hashed_password.decode('utf-8')
+        db.session.commit()
+        return jsonify({"message": "Password has been reset."}), 200
+    else:
+        return jsonify({"message": "User not found"}), 404
 
 if __name__ == '__main__':
     app.run(debug=True, port=5555)
