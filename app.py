@@ -242,3 +242,12 @@ def get_questions():
 #         return jsonify({"error": str(e)}), 500
 
 #     return jsonify({"message": "Question deleted successfully"}), 200
+@app.route('/examcategories', methods=['GET'])
+def get_exam_categories():
+    exam_categories = ExamCategory.query.all()
+    return jsonify([{
+        'id': ec.id,
+        'name': ec.name,
+        'description': ec.description,
+        'user_id': ec.user_id
+    } for ec in exam_categories])
