@@ -17,3 +17,6 @@ Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key
 Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key = <API-KEY>"). You can generate API keys from the Stripe web interface.  See https://stripe.com/api for details, or email support@stripe.com if you have any questions.
 Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key = <API-KEY>"). You can generate API keys from the Stripe web interface.  See https://stripe.com/api for details, or email support@stripe.com if you have any questions.
 Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key = <API-KEY>"). You can generate API keys from the Stripe web interface.  See https://stripe.com/api for details, or email support@stripe.com if you have any questions.
+STRIPE_SECRET_KEY environment variable not set
+STRIPE_SECRET_KEY environment variable not set
+STRIPE_SECRET_KEY environment variable not set

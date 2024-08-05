@@ -1,45 +1,23 @@
 from flask import Flask, request, jsonify
+
 from flask_cors import CORS
-from models import db, migrate, User, Subscription
+from models import db, migrate, User, Subscription,Questions,Answers,ExamCategory,SubCategory,Topic
 import uuid
 from datetime import datetime, timedelta
 import bcrypt
 import stripe
-import logging
-from logging.handlers import RotatingFileHandler
-import os
+from uuid import UUID
+
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
 
-# Configure logging
-if not app.debug:
-    handler = RotatingFileHandler('error.log', maxBytes=10000, backupCount=1)
-    handler.setLevel(logging.INFO)
-    app.logger.addHandler(handler)
+CORS(app)
 
-# Initialize CORS
-CORS(app, resources={r"/*": {"origins": "*"}})
-
-# Initialize database and migrations
 db.init_app(app)
 migrate.init_app(app, db)
 
-# Load Stripe secret key from environment variable
-stripe_api_key = os.getenv('STRIPE_SECRET_KEY')
-
-if not stripe_api_key:
-    app.logger.error('STRIPE_SECRET_KEY environment variable not set')
-else:
-    stripe.api_key = stripe_api_key
-    app.logger.info('Stripe API key loaded successfully')
-
-def is_valid_uuid(uuid_to_test, version=4):
-    try:
-        uuid_obj = uuid.UUID(uuid_to_test, version=version)
-    except ValueError:
-        return False
-    return str(uuid_obj) == uuid_to_test
+stripe.api_key = 'your-secret-key-here'
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -82,64 +60,40 @@ def login():
     if user:
         stored_password = user.password.encode('utf-8')
         if bcrypt.checkpw(password.encode('utf-8'), stored_password):
-            return jsonify({
-                'message': 'Login successful',
-                'user_id': str(user.id)  # Return user ID
-            }), 200
+            return jsonify({'message': 'Login successful'}), 200
         else:
             return jsonify({'error': 'Invalid email or password'}), 401
     return jsonify({'error': 'Invalid email or password'}), 401
 
+
 @app.route('/create-subscription', methods=['POST'])
 def create_subscription():
     data = request.get_json()
-    app.logger.info(f'Received data: {data}')
-    
     user_id = data.get('user_id')
     payment_method_id = data.get('payment_method_id')
     amount = data.get('amount')
 
-    if not user_id:
-        app.logger.error('Missing user_id.')
-        return jsonify({'error': 'User ID is required'}), 400
+    if not user_id or not payment_method_id or not amount:
+        return jsonify({'error': 'User ID, payment method, and amount are required'}), 400
 
-    if not payment_method_id:
-        app.logger.error('Missing payment_method_id.')
-        return jsonify({'error': 'Payment method ID is required'}), 400
-
-    if amount is None or amount < 50:  # Ensure minimum amount of 50 KSh
-        app.logger.error('Amount must be at least 50 KSh.')
-        return jsonify({'error': 'Amount must be at least 50 KSh'}), 400
-
-    if not is_valid_uuid(user_id):
-        app.logger.error(f'Invalid user ID: {user_id}')
-        return jsonify({'error': 'Invalid user ID'}), 400
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
 
     try:
-        user_id = uuid.UUID(user_id)
-        user = User.query.get(user_id)
-        
-        if not user:
-            app.logger.error('User not found.')
-            return jsonify({'error': 'User not found'}), 404
-
-        # Create PaymentIntent with automatic payment methods enabled
+        # Create a Payment Intent
         payment_intent = stripe.PaymentIntent.create(
-            amount=int(amount * 100),  # Convert KSh to cents
-            currency='kes',
+            amount=int(amount * 100),  # Stripe expects the amount in cents
+            currency='kes',  # Use 'kes' for Kenyan Shilling
             payment_method=payment_method_id,
             confirm=True,
-            automatic_payment_methods={
-                'enabled': True,
-                'allow_redirects': 'never',  # Change this to 'always' if needed
-            }
         )
-        app.logger.info(f'Payment Intent created: {payment_intent.id}')
 
+        # Create a new subscription
         new_subscription = Subscription(
             id=uuid.uuid4(),
             user_id=user_id,
-            type='premium',
+            type='premium',  # Adjust based on your subscription types
             amount=amount,
             created_at=datetime.utcnow(),
             expires_at=datetime.utcnow() + timedelta(days=30)
@@ -149,14 +103,97 @@ def create_subscription():
 
         return jsonify({'success': True, 'subscription_id': new_subscription.id}), 201
     except stripe.error.CardError as e:
-        app.logger.error(f'Card error: {str(e)}')
         return jsonify({'success': False, 'error': f'Card error: {str(e)}'}), 400
     except stripe.error.StripeError as e:
-        app.logger.error(f'Stripe error: {str(e)}')
         return jsonify({'success': False, 'error': 'Payment failed. Please try again.'}), 400
     except Exception as e:
-        app.logger.error(f'Exception occurred: {str(e)}')
         return jsonify({'success': False, 'error': 'An error occurred. Please try again later.'}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/update-subscription', methods=['POST'])
+def update_subscription():
+    data = request.get_json()
+    subscription_id = data.get('subscription_id')
+    user_id = data.get('user_id')
+    amount = data.get('amount')
+
+    if not subscription_id or not user_id or not amount:
+        return jsonify({'error': 'Subscription ID, user ID, and amount are required'}), 400
+
+    subscription = Subscription.query.get(subscription_id)
+    if not subscription or subscription.user_id!= user_id:
+        return jsonify({'error': 'Invalid subscription or user ID'}), 404
+
+    subscription.amount = amount
+    subscription.expires_at = datetime.utcnow() + timedelta(days=30)
+
+    db.session.commit()
+
+    return jsonify({'success': True}), 200
+
+@app.route('/cancel-subscription', methods=['POST'])
+def cancel_subscription():
+    data = request.get_json()
+    subscription_id = data.get('subscription_id')
+    user_id = data.get('user_id')
+
+    if not subscription_id or not user_id:
+        return jsonify({'error': 'Subscription ID and user ID are required'}), 400
+
+    subscription = Subscription.query.get(subscription_id)
+    if not subscription or subscription.user_id!= user_id:
+        return jsonify({'error': 'Invalid subscription or user ID'}), 404
+
+    try:
+        # Cancel the subscription
+        stripe.Subscription.cancel(subscription.id, at_period_end=True)
+
+        # Update the subscription status in the database
+        subscription.status = 'cancelled'
+        db.session.commit()
+
+        return jsonify({'success': True}), 200
+    except stripe.error.InvalidRequestError as e:
+        return jsonify({'success': False, 'error': f'Invalid request'}, 400)
+    except stripe.error.RateLimitError as e:
+        return jsonify({'success': False, 'error': f'Rate limit exceeded'}, 429)
+    except stripe.error.AuthenticationError as e:
+        return jsonify({'success': False, 'error': 'Authentication error'}, 401)
+@app.route('/create_question', methods=['POST'])
+def create_question():
+    data = request.get_json()
+
+    # Validate data
+    question_text = data.get('question')
+    topic_id = data.get('topic_id')  # Expect UUID or None
+    mode = data.get('mode')
+    exam_mode = data.get('exam_mode')
+
+    if not question_text:
+        return jsonify({"error": "Question text is required"}), 400
+
+    # Convert topic_id to UUID if not None
+    if topic_id:
+        if isinstance(topic_id, int):
+            topic_id = str(topic_id)  # Convert integer to string
+        try:
+            topic_id = uuid.UUID(topic_id)
+        except ValueError:
+            return jsonify({"error": "Invalid topic_id format"}), 400
+
+    # Create new question instance
+    new_question = Questions(
+        question=question_text,
+        topic_id=topic_id,  # Should be a UUID or None
+        mode=mode,
+        exam_mode=exam_mode
+    )
+
+    # Add to session and commit
+    db.session.add(new_question)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"message": "Question created successfully", "question_id": str(new_question.id)}), 201
