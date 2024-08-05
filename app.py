@@ -296,7 +296,7 @@ def create_exam_category():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-    @app.route('/examcategories/<uuid:exam_category_id>', methods=['PUT'])
+@app.route('/examcategories/<uuid:exam_category_id>', methods=['PUT'])
 def update_exam_category(exam_category_id):
     data = request.get_json()
     exam_category = ExamCategory.query.get(exam_category_id)
@@ -330,6 +330,67 @@ def delete_exam_category(exam_category_id):
     try:
         db.session.commit()
         return jsonify({"message": "Exam category deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+@app.route('/subcategories', methods=['GET'])
+def get_subcategories():
+    subcategories = SubCategory.query.all()
+    return jsonify([{
+        'id': sc.id,
+        'name': sc.name,
+        'description': sc.description,
+        'user_id': sc.user_id,
+        'exam_category_id': sc.exam_category_id
+    } for sc in subcategories])
+
+@app.route('/subcategories/<uuid:sub_category_id>', methods=['GET'])
+def get_subcategory(sub_category_id):
+    sub_category = SubCategory.query.get(sub_category_id)
+    if sub_category:
+        return jsonify({
+            'id': sub_category.id,
+            'name': sub_category.name,
+            'description': sub_category.description,
+            'user_id': sub_category.user_id,
+            'exam_category_id': sub_category.exam_category_id
+        })
+    else:
+        return jsonify({"error": "Subcategory not found"}), 404
+
+@app.route('/subcategories', methods=['POST'])
+def create_subcategory():
+    data = request.get_json()
+    
+    # Validate incoming data
+    required_fields = ['name', 'description', 'user_id', 'exam_category_id']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing {field}"}), 400
+
+    try:
+        user_id = UUID(data['user_id'])  # Ensure user_id is a valid UUID
+        exam_category_id = UUID(data['exam_category_id'])  # Ensure exam_category_id is a valid UUID
+    except ValueError:
+        return jsonify({"error": "Invalid UUID format"}), 400
+
+    new_subcategory = SubCategory(
+        name=data['name'],
+        description=data['description'],
+        user_id=user_id,
+        exam_category_id=exam_category_id
+    )
+    
+    db.session.add(new_subcategory)
+    try:
+        db.session.commit()
+        return jsonify({
+            'id': str(new_subcategory.id),  # Convert UUID to string for JSON response
+            'name': new_subcategory.name,
+            'description': new_subcategory.description,
+            'user_id': str(new_subcategory.user_id),  # Convert UUID to string for JSON response
+            'exam_category_id': str(new_subcategory.exam_category_id)  # Convert UUID to string for JSON response
+        }), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
