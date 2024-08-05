@@ -251,3 +251,48 @@ def get_exam_categories():
         'description': ec.description,
         'user_id': ec.user_id
     } for ec in exam_categories])
+@app.route('/examcategories/<uuid:exam_category_id>', methods=['GET'])
+def get_exam_category(exam_category_id):
+    exam_category = ExamCategory.query.get(exam_category_id)
+    if exam_category:
+        return jsonify({
+            'id': exam_category.id,
+            'name': exam_category.name,
+            'description': exam_category.description,
+            'user_id': exam_category.user_id
+        })
+    else:
+        return jsonify({"error": "Exam category not found"}), 404
+@app.route('/examcategories', methods=['POST'])
+def create_exam_category():
+    data = request.get_json()
+    
+    # Validate incoming data
+    required_fields = ['name', 'description', 'user_id']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing {field}"}), 400
+
+    try:
+        user_id = uuid.UUID(data['user_id'])  # Ensure user_id is a valid UUID
+    except ValueError:
+        return jsonify({"error": "Invalid UUID format"}), 400
+
+    new_exam_category = ExamCategory(
+        name=data['name'],
+        description=data['description'],
+        user_id=user_id
+    )
+    
+    db.session.add(new_exam_category)
+    try:
+        db.session.commit()
+        return jsonify({
+            'id': str(new_exam_category.id),  # Convert UUID to string for JSON response
+            'name': new_exam_category.name,
+            'description': new_exam_category.description,
+            'user_id': str(new_exam_category.user_id)  # Convert UUID to string for JSON response
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
