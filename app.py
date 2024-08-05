@@ -144,10 +144,9 @@ def cancel_subscription():
         return jsonify({'error': 'Invalid subscription or user ID'}), 404
 
     try:
-        # Cancel the subscription
+     
         stripe.Subscription.cancel(subscription.id, at_period_end=True)
 
-        # Update the subscription status in the database
         subscription.status = 'cancelled'
         db.session.commit()
 
@@ -162,25 +161,26 @@ def cancel_subscription():
 def create_question():
     data = request.get_json()
 
-    # Validate data
+    
     question_text = data.get('question')
-    topic_id = data.get('topic_id')  # Expect UUID or None
+    topic_id = data.get('topic_id')  
     mode = data.get('mode')
     exam_mode = data.get('exam_mode')
 
     if not question_text:
         return jsonify({"error": "Question text is required"}), 400
 
-    # Convert topic_id to UUID if not None
+    if not mode:
+        return jsonify({"error": "Mode is required"}), 400
     if topic_id:
         if isinstance(topic_id, int):
-            topic_id = str(topic_id)  # Convert integer to string
+            topic_id = str(topic_id)  
         try:
             topic_id = uuid.UUID(topic_id)
         except ValueError:
             return jsonify({"error": "Invalid topic_id format"}), 400
 
-    # Create new question instance
+    
     new_question = Questions(
         question=question_text,
         topic_id=topic_id,  # Should be a UUID or None
@@ -188,7 +188,7 @@ def create_question():
         exam_mode=exam_mode
     )
 
-    # Add to session and commit
+    
     db.session.add(new_question)
     try:
         db.session.commit()
@@ -267,14 +267,14 @@ def get_exam_category(exam_category_id):
 def create_exam_category():
     data = request.get_json()
     
-    # Validate incoming data
+    
     required_fields = ['name', 'description', 'user_id']
     for field in required_fields:
         if field not in data:
             return jsonify({"error": f"Missing {field}"}), 400
 
     try:
-        user_id = uuid.UUID(data['user_id'])  # Ensure user_id is a valid UUID
+        user_id = uuid.UUID(data['user_id']) 
     except ValueError:
         return jsonify({"error": "Invalid UUID format"}), 400
 
@@ -288,10 +288,10 @@ def create_exam_category():
     try:
         db.session.commit()
         return jsonify({
-            'id': str(new_exam_category.id),  # Convert UUID to string for JSON response
+            'id': str(new_exam_category.id),  
             'name': new_exam_category.name,
             'description': new_exam_category.description,
-            'user_id': str(new_exam_category.user_id)  # Convert UUID to string for JSON response
+            'user_id': str(new_exam_category.user_id)  
         }), 201
     except Exception as e:
         db.session.rollback()
@@ -362,15 +362,15 @@ def get_subcategory(sub_category_id):
 def create_subcategory():
     data = request.get_json()
     
-    # Validate incoming data
+    
     required_fields = ['name', 'description', 'user_id', 'exam_category_id']
     for field in required_fields:
         if field not in data:
             return jsonify({"error": f"Missing {field}"}), 400
 
     try:
-        user_id = UUID(data['user_id'])  # Ensure user_id is a valid UUID
-        exam_category_id = UUID(data['exam_category_id'])  # Ensure exam_category_id is a valid UUID
+        user_id = UUID(data['user_id'])  
+        exam_category_id = UUID(data['exam_category_id']) 
     except ValueError:
         return jsonify({"error": "Invalid UUID format"}), 400
 
@@ -385,11 +385,11 @@ def create_subcategory():
     try:
         db.session.commit()
         return jsonify({
-            'id': str(new_subcategory.id),  # Convert UUID to string for JSON response
+            'id': str(new_subcategory.id),  
             'name': new_subcategory.name,
             'description': new_subcategory.description,
-            'user_id': str(new_subcategory.user_id),  # Convert UUID to string for JSON response
-            'exam_category_id': str(new_subcategory.exam_category_id)  # Convert UUID to string for JSON response
+            'user_id': str(new_subcategory.user_id),  
+            'exam_category_id': str(new_subcategory.exam_category_id)  
         }), 201
     except Exception as e:
         db.session.rollback()
@@ -461,15 +461,15 @@ def get_topic(topic_id):
 def create_topic():
     data = request.get_json()
     
-    # Validate incoming data
+   
     required_fields = ['name', 'description', 'user_id', 'sub_category_id']
     for field in required_fields:
         if field not in data:
             return jsonify({"error": f"Missing {field}"}), 400
 
     try:
-        user_id = UUID(data['user_id'])  # Ensure user_id is a valid UUID
-        sub_category_id = UUID(data['sub_category_id'])  # Ensure sub_category_id is a valid UUID
+        user_id = UUID(data['user_id'])  
+        sub_category_id = UUID(data['sub_category_id'])  
     except ValueError:
         return jsonify({"error": "Invalid UUID format"}), 400
 
@@ -484,11 +484,11 @@ def create_topic():
     try:
         db.session.commit()
         return jsonify({
-            'id': str(new_topic.id),  # Convert UUID to string for JSON response
+            'id': str(new_topic.id),  
             'name': new_topic.name,
             'description': new_topic.description,
-            'user_id': str(new_topic.user_id),  # Convert UUID to string for JSON response
-            'sub_category_id': str(new_topic.sub_category_id)  # Convert UUID to string for JSON response
+            'user_id': str(new_topic.user_id), 
+            'sub_category_id': str(new_topic.sub_category_id)  
         }), 201
     except Exception as e:
         db.session.rollback()
