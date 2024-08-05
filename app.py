@@ -197,3 +197,48 @@ def create_question():
         return jsonify({"error": str(e)}), 500
 
     return jsonify({"message": "Question created successfully", "question_id": str(new_question.id)}), 201
+@app.route('/questions/<uuid:question_id>/answers', methods=['POST'])
+def create_answer(question_id):
+    data = request.get_json()
+    answer = Answers(
+        question_id=question_id,
+        answer_type=data['answer_type'],
+        answer=data['answer']
+    )
+    db.session.add(answer)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    return jsonify(answer.to_dict()), 201
+
+@app.route('/questions', methods=['GET'])
+def get_questions():
+    questions = Questions.query.all()
+    return jsonify([question.to_dict() for question in questions])
+
+# @app.route('/questions/<uuid:question_id>', methods=['DELETE'])
+# def delete_question(question_id):
+#     # Ensure user is logged in
+#     if not current_user.is_authenticated:
+#         return jsonify({"error": "Unauthorized"}), 401
+
+#     # Check if the user is an admin
+#     if not current_user.is_admin:
+#         return jsonify({"error": "Forbidden"}), 403
+
+#     # Find the question to delete
+#     question = Questions.query.get(question_id)
+#     if not question:
+#         return jsonify({"error": "Question not found"}), 404
+
+#     # Delete the question
+#     db.session.delete(question)
+#     try:
+#         db.session.commit()
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({"error": str(e)}), 500
+
+#     return jsonify({"message": "Question deleted successfully"}), 200
