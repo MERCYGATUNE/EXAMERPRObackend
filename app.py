@@ -296,3 +296,40 @@ def create_exam_category():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    @app.route('/examcategories/<uuid:exam_category_id>', methods=['PUT'])
+def update_exam_category(exam_category_id):
+    data = request.get_json()
+    exam_category = ExamCategory.query.get(exam_category_id)
+    if not exam_category:
+        return jsonify({"error": "Exam category not found"}), 404
+
+    exam_category.name = data.get('name', exam_category.name)
+    exam_category.description = data.get('description', exam_category.description)
+    exam_category.user_id = data.get('user_id', exam_category.user_id)
+
+    try:
+        db.session.commit()
+        return jsonify({
+            'id': exam_category.id,
+            'name': exam_category.name,
+            'description': exam_category.description,
+            'user_id': exam_category.user_id
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}),
+
+
+@app.route('/examcategories/<uuid:exam_category_id>', methods=['DELETE'])
+def delete_exam_category(exam_category_id):
+    exam_category = ExamCategory.query.get(exam_category_id)
+    if not exam_category:
+        return jsonify({"error": "Exam category not found"}), 404
+
+    db.session.delete(exam_category)
+    try:
+        db.session.commit()
+        return jsonify({"message": "Exam category deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
