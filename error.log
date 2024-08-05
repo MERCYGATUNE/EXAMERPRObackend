@@ -1,0 +1,22 @@
+Exception occurred: badly formed hexadecimal UUID string
+Exception occurred: badly formed hexadecimal UUID string
+Invalid user ID.
+Invalid user ID.
+Invalid user ID.
+Invalid user ID.
+Invalid user ID.
+Invalid user ID: example-user-id
+Missing required fields: user_id, payment_method_id, or amount.
+Stripe error: Request req_ciFHOjBwkbM9JH: A `return_url` must be specified because this Payment Intent is configured to automatically accept the payment methods enabled in the Dashboard, some of which may require a full page redirect to succeed. If you do not want to accept redirect-based payment methods, set `automatic_payment_methods[enabled]` to `true` and `automatic_payment_methods[allow_redirects]` to `never` when creating Setup Intents and Payment Intents.
+Stripe error: Request req_qW2wvAZPXzmFw4: Amount must convert to at least 50 cents. KSh50.00 converts to approximately $0.38.
+Stripe error: Request req_yCiRb7WhuRr747: Amount must convert to at least 50 cents. KSh50.00 converts to approximately $0.38.
+Stripe error: Request req_ra9TXJ1QU8CACp: Amount must convert to at least 50 cents. KSh50.00 converts to approximately $0.38.
+Stripe error: Request req_9VcgvK9xQ3oiEN: Amount must convert to at least 50 cents. KSh50.00 converts to approximately $0.38.
+Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key = <API-KEY>"). You can generate API keys from the Stripe web interface.  See https://stripe.com/api for details, or email support@stripe.com if you have any questions.
+Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key = <API-KEY>"). You can generate API keys from the Stripe web interface.  See https://stripe.com/api for details, or email support@stripe.com if you have any questions.
+Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key = <API-KEY>"). You can generate API keys from the Stripe web interface.  See https://stripe.com/api for details, or email support@stripe.com if you have any questions.
+Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key = <API-KEY>"). You can generate API keys from the Stripe web interface.  See https://stripe.com/api for details, or email support@stripe.com if you have any questions.
+Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key = <API-KEY>"). You can generate API keys from the Stripe web interface.  See https://stripe.com/api for details, or email support@stripe.com if you have any questions.
+STRIPE_SECRET_KEY environment variable not set
+STRIPE_SECRET_KEY environment variable not set
+STRIPE_SECRET_KEY environment variable not set
