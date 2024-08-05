@@ -5,6 +5,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String, Float, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
+from sqlalchemy import Column, DateTime, func
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -129,15 +130,38 @@ class Questions(db.Model):
     comments = relationship("Comment", back_populates="question")
     user_answers = relationship("UserAnswers", back_populates="question")
 
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'question': self.question,
+            'topic_id': str(self.topic_id) if self.topic_id else None,
+            'mode': self.mode,
+            'exam_mode': self.exam_mode,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            
+        }
+
+
+
 class Answers(db.Model):
     __tablename__ = 'answers'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'), nullable=False)
+    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'))
     answer_type = Column(String)
     answer = Column(Text)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
 
     question = relationship("Questions", back_populates="answers")
+
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'question_id': str(self.question_id),
+            'answer_type': self.answer_type,
+            'answer': self.answer,
+            'created_at': self.created_at.isoformat()
+        }
+
 
 class UserAnswers(db.Model):
     __tablename__ = 'useranswers'
@@ -170,8 +194,8 @@ class Topic(db.Model):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(Text)
-    user_id = Column(UUID(as_uuid=True))
-    sub_category_id = Column(UUID(as_uuid=True))
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+    sub_category_id = Column(UUID(as_uuid=True), nullable=False)
 
 class SubCategory(db.Model):
     __tablename__ = 'subcategory'
