@@ -557,4 +557,4 @@ def reset_with_token(token):
         return jsonify({"message": "User not found"}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5555)5
+    app.run(debug=True, port=5555)
