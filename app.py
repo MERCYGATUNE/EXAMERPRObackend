@@ -200,7 +200,7 @@ def create_question():
     
     new_question = Questions(
         question=question_text,
-        topic_id=topic_id,  # Should be a UUID or None
+        topic_id=topic_id,  
         mode=mode,
         exam_mode=exam_mode
     )

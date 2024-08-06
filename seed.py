@@ -9,7 +9,6 @@ import uuid
 
 fake = Faker()
 
-# Generate sample data for users
 def generate_users(num_users):
     users = []
     for _ in range(num_users):
@@ -26,13 +25,12 @@ def generate_users(num_users):
         users.append(user)
     return users
 
-# Generate sample data for subscriptions
 def generate_subscriptions(users, num_subscriptions):
     subscriptions = []
     for _ in range(num_subscriptions):
         user = random.choice(users)
         subscription = Subscription(
-            user_id=user.id,  # Use .id attribute directly
+            user_id=user.id, 
             type=random.choice(["basic", "premium"]),
             amount=round(random.uniform(10.0, 200.0), 2),
             created_at=datetime.utcnow(),
@@ -41,15 +39,14 @@ def generate_subscriptions(users, num_subscriptions):
         subscriptions.append(subscription)
     return subscriptions
 
-# Generate sample data for topics
 def generate_topics(users, num_topics):
     topics = []
     for _ in range(num_topics):
         topic = Topic(
             name=fake.word(),
             description=fake.text(),
-            user_id=random.choice(users).id,  # Use .id attribute directly
-            sub_category_id=None  # Adjust as needed
+            user_id=random.choice(users).id,  
+            sub_category_id=None 
         )
         topics.append(topic)
     return topics
@@ -59,7 +56,7 @@ def generate_questions(num_questions, users):
     for _ in range(num_questions):
         topic_id = None
         if random.choice([True, False]):
-            topic_id = uuid.uuid4()  # Generate a UUID if needed
+            topic_id = uuid.uuid4()  
         
         question = Questions(
             question=fake.sentence(),
@@ -84,35 +81,30 @@ def generate_examcategory(users):
     exam_categories = []
     for _ in range(len(users)):
         user = random.choice(users)
-        user_id = user.id if isinstance(user.id, UUID) else UUID(user.id)  # Ensure user_id is a UUID object
+        user_id = user.id if isinstance(user.id, UUID) else UUID(user.id)  
         exam_category = ExamCategory(
             name="Sample Category",
             description="Sample Description",
             user_id=user_id
         )
         exam_categories.append(exam_category)
-    return exam_categories
 
 # Seeding function
 def seed():
     with app.app_context():
-        # Create tables if they don't exist
         db.create_all()
 
-        # Clear existing data
         db.session.query(User).delete()
         db.session.query(Subscription).delete()
         db.session.query(Topic).delete()
         db.session.query(Questions).delete()
         db.session.query(Answers).delete()
         db.session.commit()
-        # Generate and seed users
         user_instances = generate_users(10)
         for user in user_instances:
             db.session.add(user)
         db.session.commit()
 
-        # Generate and seed subscriptions
         subscriptions = generate_subscriptions(user_instances, 5)
         for sub in subscriptions:
             db.session.add(sub)
@@ -129,12 +121,10 @@ def seed():
             db.session.add(answer)
         db.session.commit()
 
-        # Generate and seed topics
         topics = generate_topics(user_instances, 5)
         for topic in topics:
             db.session.add(topic)
         db.session.commit()
-          # Generate and seed exam_categories
         exam_categories = generate_examcategory(user_instances)
         for exam_category in exam_categories:
             db.session.add(exam_category)
