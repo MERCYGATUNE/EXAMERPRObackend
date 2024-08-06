@@ -1,0 +1,445 @@
+
+
+
+
+
+
+
+
+
+
+@app.route('/examcategories', methods=['POST'])
+def create_exam_category():
+    data = request.get_json()
+    
+    # Validate incoming data
+    required_fields = ['name', 'description', 'user_id']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing {field}"}), 400
+
+    try:
+        user_id = uuid.UUID(data['user_id'])  # Ensure user_id is a valid UUID
+    except ValueError:
+        return jsonify({"error": "Invalid UUID format"}), 400
+
+    new_exam_category = ExamCategory(
+        name=data['name'],
+        description=data['description'],
+        user_id=user_id
+    )
+    
+    db.session.add(new_exam_category)
+    try:
+        db.session.commit()
+        return jsonify({
+            'id': str(new_exam_category.id),  # Convert UUID to string for JSON response
+            'name': new_exam_category.name,
+            'description': new_exam_category.description,
+            'user_id': str(new_exam_category.user_id)  # Convert UUID to string for JSON response
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/examcategories/<uuid:exam_category_id>', methods=['PUT'])
+def update_exam_category(exam_category_id):
+    data = request.get_json()
+    exam_category = ExamCategory.query.get(exam_category_id)
+    if not exam_category:
+        return jsonify({"error": "Exam category not found"}), 404
+
+    exam_category.name = data.get('name', exam_category.name)
+    exam_category.description = data.get('description', exam_category.description)
+    exam_category.user_id = data.get('user_id', exam_category.user_id)
+
+    try:
+        db.session.commit()
+        return jsonify({
+            'id': exam_category.id,
+            'name': exam_category.name,
+            'description': exam_category.description,
+            'user_id': exam_category.user_id
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}),
+
+
+@app.route('/examcategories/<uuid:exam_category_id>', methods=['DELETE'])
+def delete_exam_category(exam_category_id):
+    exam_category = ExamCategory.query.get(exam_category_id)
+    if not exam_category:
+        return jsonify({"error": "Exam category not found"}), 404
+
+    db.session.delete(exam_category)
+    try:
+        db.session.commit()
+        return jsonify({"message": "Exam category deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+@app.route('/subcategories', methods=['GET'])
+def get_subcategories():
+    subcategories = SubCategory.query.all()
+    return jsonify([{
+        'id': sc.id,
+        'name': sc.name,
+        'description': sc.description,
+        'user_id': sc.user_id,
+        'exam_category_id': sc.exam_category_id
+    } for sc in subcategories])
+    
+ @app.route('/subcategories', methods=['POST'])
+def create_subcategory():
+    data = request.get_json()
+    
+    # Validate incoming data
+    required_fields = ['name', 'description', 'user_id', 'exam_category_id']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing {field}"}), 400
+
+    try:
+        user_id = UUID(data['user_id'])  # Ensure user_id is a valid UUID
+        exam_category_id = UUID(data['exam_category_id'])  # Ensure exam_category_id is a valid UUID
+    except ValueError:
+        return jsonify({"error": "Invalid UUID format"}), 400
+
+    new_subcategory = SubCategory(
+        name=data['name'],
+        description=data['description'],
+        user_id=user_id,
+        exam_category_id=exam_category_id
+    )
+    
+    db.session.add(new_subcategory)
+    try:
+        db.session.commit()
+        return jsonify({
+            'id': str(new_subcategory.id),  # Convert UUID to string for JSON response
+            'name': new_subcategory.name,
+            'description': new_subcategory.description,
+            'user_id': str(new_subcategory.user_id),  # Convert UUID to string for JSON response
+            'exam_category_id': str(new_subcategory.exam_category_id)  # Convert UUID to string for JSON response
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+@app.route('/subcategories/<uuid:sub_category_id>', methods=['PUT'])
+def update_subcategory(sub_category_id):
+    data = request.get_json()
+    sub_category = SubCategory.query.get(sub_category_id)
+    if not sub_category:
+        return jsonify({"error": "Subcategory not found"}), 404
+
+    sub_category.name = data.get('name', sub_category.name)
+    sub_category.description = data.get('description', sub_category.description)
+    sub_category.user_id = data.get('user_id', sub_category.user_id)
+    sub_category.exam_category_id = data.get('exam_category_id', sub_category.exam_category_id)
+
+    try:
+        db.session.commit()
+        return jsonify({
+            'id': sub_category.id,
+            'name': sub_category.name,
+            'description': sub_category.description,
+            'user_id': sub_category.user_,
+            'exam_category_id': sub_category.exam_category_id
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/subcategories/<uuid:sub_category_id>', methods=['DELETE'])
+def delete_subcategory(sub_category_id):
+    sub_category = SubCategory.query.get(sub_category_id)
+    if not sub_category:
+        return jsonify({"error": "Subcategory not found"}), 404
+
+    db.session.delete(sub_category)
+    try:
+        db.session.commit()
+        return jsonify({"message": "Subcategory deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500  
+    
+    
+    
+    
+    
+    
+ 
+@app.route('/topics', methods=['POST'])
+def create_topic():
+    data = request.get_json()
+    
+    # Validate incoming data
+    required_fields = ['name', 'description', 'user_id', 'sub_category_id']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing {field}"}), 400
+
+    try:
+        user_id = UUID(data['user_id'])  # Ensure user_id is a valid UUID
+        sub_category_id = UUID(data['sub_category_id'])  # Ensure sub_category_id is a valid UUID
+    except ValueError:
+        return jsonify({"error": "Invalid UUID format"}), 400
+
+    new_topic = Topic(
+        name=data['name'],
+        description=data['description'],
+        user_id=user_id,
+        sub_category_id=sub_category_id
+    )
+    
+    db.session.add(new_topic)
+    try:
+        db.session.commit()
+        return jsonify({
+            'id': str(new_topic.id),  # Convert UUID to string for JSON response
+            'name': new_topic.name,
+            'description': new_topic.description,
+            'user_id': str(new_topic.user_id),  # Convert UUID to string for JSON response
+            'sub_category_id': str(new_topic.sub_category_id)  # Convert UUID to string for JSON response
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500     
+    
+    
+ @app.route('/questions', methods=['POST'])
+def create_question():
+    data = request.get_json()
+    new_question = Questions(
+        question=data['question'],
+        topic_id=data['topic_id'],
+        mode=data.get('mode'),
+        exam_mode=data.get('exam_mode'),
+        created_at=datetime.utcnow()
+    )
+    db.session.add(new_question)
+    db.session.commit()
+    return jsonify(new_question.to_dict()), 201
+
+@app.route('/questions/<uuid:question_id>', methods=['PUT'])
+def update_question(question_id):
+    data = request.get_json()
+    question = Questions.query.get(question_id)
+    if question:
+        question.question = data.get('question', question.question)
+        question.topic_id = data.get('topic_id', question.topic_id)
+        question.mode = data.get('mode', question.mode)
+        question.exam_mode = data.get('exam_mode', question.exam_mode)
+        db.session.commit()
+        return jsonify(question.to_dict())
+    else:
+        return jsonify({"error": "Question not found"}), 404
+
+@app.route('/questions/<uuid:question_id>', methods=['DELETE'])
+def delete_question(question_id):
+    question = Questions.query.get(question_id)
+    if question:
+        db.session.delete(question)
+        db.session.commit()
+        return jsonify({"message": "Question deleted"})
+    else:
+        return jsonify({"error": "Question not found"}), 404
+
+
+# Routes for UserAnswers
+@app.route('/useranswers', methods=['GET'])
+def get_user_answers():
+    user_answers = UserAnswers.query.all()
+    return jsonify([user_answer.to_dict() for user_answer in user_answers])
+
+@app.route('/useranswers/<uuid:user_answer_id>', methods=['GET'])
+def get_user_answer(user_answer_id):
+    user_answer = UserAnswers.query.get(user_answer_id)
+    if user_answer:
+        return jsonify(user_answer.to_dict())
+    else:
+        return jsonify({"error": "User Answer not found"}), 404
+
+@app.route('/useranswers', methods=['POST'])
+def create_user_answer():
+    data = request.get_json()
+    new_user_answer = UserAnswers(
+        question_id=data['question_id'],
+        user_id=data['user_id'],
+        answer_type=data.get('answer_type'),
+        answer=data.get('answer'),
+        attempts=data.get('attempts', 1)
+    )
+    db.session.add(new_user_answer)
+    db.session.commit()
+    return jsonify(new_user_answer.to_dict()), 201
+
+@app.route('/useranswers/<uuid:user_answer_id>', methods=['PUT'])
+def update_user_answer(user_answer_id):
+    data = request.get_json()
+    user_answer = UserAnswers.query.get(user_answer_id)
+    if user_answer:
+        user_answer.answer_type = data.get('answer_type', user_answer.answer_type)
+        user_answer.answer = data.get('answer', user_answer.answer)
+        user_answer.attempts = data.get('attempts', user_answer.attempts)
+        db.session.commit()
+        return jsonify(user_answer.to_dict())
+    else:
+        return jsonify({"error": "User Answer not found"}), 404
+
+@app.route('/useranswers/<uuid:user_answer_id>', methods=['DELETE'])
+def delete_user_answer(user_answer_id):
+    user_answer = UserAnswers.query.get(user_answer_id)
+    if user_answer:
+        db.session.delete(user_answer)
+        db.session.commit()
+        return jsonify({"message": "User Answer deleted"})
+    else:
+        return jsonify({"error": "User Answer not found"}), 404
+
+
+# Score CRUD Operations
+@app.route('/scores', methods=['POST'])
+def create_score():
+    data = request.get_json()
+    new_score = Score(
+        user_id=data['user_id'],
+        topic_id=data.get('topic_id'),
+        possible_score=data['possible_score'],
+        user_score=data['user_score'],
+        completion_rate=data.get('completion_rate')
+    )
+    db.session.add(new_score)
+    db.session.commit()
+    return jsonify(to_dict(new_score)), 201
+
+@app.route('/scores', methods=['GET'])
+def get_scores():
+    scores = Score.query.all()
+    return jsonify([to_dict(score) for score in scores]), 200
+
+@app.route('/scores/<uuid:score_id>', methods=['GET'])
+def get_score(score_id):
+    score = Score.query.get_or_404(score_id)
+    return jsonify(to_dict(score)), 200
+
+@app.route('/scores/<uuid:score_id>', methods=['PUT'])
+def update_score(score_id):
+    data = request.get_json()
+    score = Score.query.get_or_404(score_id)
+    if 'user_id' in data:
+        score.user_id = data['user_id']
+    if 'topic_id' in data:
+        score.topic_id = data['topic_id']
+    if 'possible_score' in data:
+        score.possible_score = data['possible_score']
+    if 'user_score' in data:
+        score.user_score = data['user_score']
+    if 'completion_rate' in data:
+        score.completion_rate = data['completion_rate']
+    db.session.commit()
+    return jsonify(to_dict(score)), 200
+
+@app.route('/scores/<uuid:score_id>', methods=['DELETE'])
+def delete_score(score_id):
+    score = Score.query.get_or_404(score_id)
+    db.session.delete(score)
+    db.session.commit()
+    return '', 204
+
+# Questions CRUD Operations
+@app.route('/questions', methods=['POST'])
+def create_question():
+    data = request.get_json()
+    new_question = Questions(
+        text=data['text'],
+        topic_id=data.get('topic_id')
+    )
+    db.session.add(new_question)
+    db.session.commit()
+    return jsonify(to_dict(new_question)), 201
+
+
+@app.route('/questions/<uuid:question_id>', methods=['PUT'])
+def update_question(question_id):
+    data = request.get_json()
+    question = Questions.query.get_or_404(question_id)
+    if 'text' in data:
+        question.text = data['text']
+    if 'topic_id' in data:
+        question.topic_id = data['topic_id']
+    db.session.commit()
+    return jsonify(to_dict(question)), 200
+
+@app.route('/questions/<uuid:question_id>', methods=['DELETE'])
+def delete_question(question_id):
+    question = Questions.query.get_or_404(question_id)
+    db.session.delete(question)
+    db.session.commit()
+    return '', 204
+
+
+# UserAnswers CRUD Operations
+@app.route('/user_answers', methods=['POST'])
+def create_user_answer():
+    data = request.get_json()
+    new_user_answer = UserAnswers(
+        user_id=data['user_id'],
+        answer_id=data['answer_id']
+    )
+    db.session.add(new_user_answer)
+    db.session.commit()
+    return jsonify(to_dict(new_user_answer)), 201
+
+@app.route('/user_answers', methods=['GET'])
+def get_user_answers():
+    user_answers = UserAnswers.query.all()
+    return jsonify([to_dict(ua) for ua in user_answers]), 200
+
+@app.route('/user_answers/<uuid:user_answer_id>', methods=['GET'])
+def get_user_answer(user_answer_id):
+    user_answer = UserAnswers.query.get_or_404(user_answer_id)
+    return jsonify(to_dict(user_answer)), 200
+
+@app.route('/user_answers/<uuid:user_answer_id>', methods=['PUT'])
+def update_user_answer(user_answer_id):
+    data = request.get_json()
+    user_answer = UserAnswers.query.get_or_404(user_answer_id)
+    if 'user_id' in data:
+        user_answer.user_id = data['user_id']
+    if 'answer_id' in data:
+        user_answer.answer_id = data['answer_id']
+    db.session.commit()
+    return jsonify(to_dict(user_answer)), 200
+
+@app.route('/user_answers/<uuid:user_answer_id>', methods=['DELETE'])
+def delete_user_answer(user_answer_id):
+    user_answer = UserAnswers.query.get_or_404(user_answer_id)
+    db.session.delete(user_answer)
+    db.session.commit()
+    return '', 204
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
