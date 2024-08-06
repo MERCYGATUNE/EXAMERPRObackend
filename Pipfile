@@ -11,6 +11,8 @@ flask-cors = "*"
 flask-mail = "*"
 flask-sqlalchemy = "*"
 flask-migrate = "*"
+itsdangerous = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
