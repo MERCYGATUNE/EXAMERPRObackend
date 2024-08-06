@@ -794,6 +794,147 @@ def create_user_choice():
     db.session.commit()
     return jsonify(to_dict(new_user_choice)), 201
 
+# Payment CRUD Operations
+@app.route('/payments', methods=['POST'])
+def create_payment():
+    data = request.get_json()
+    new_payment = Payment(
+        user_id=data['user_id'],
+        subscription_id=data.get('subscription_id'),
+        amount=data['amount'],
+        expires_at=data.get('expires_at'),
+        payment_type=data.get('payment_type')
+    )
+    db.session.add(new_payment)
+    db.session.commit()
+    return jsonify(to_dict(new_payment)), 201
+
+@app.route('/payments', methods=['GET'])
+def get_payments():
+    payments = Payment.query.all()
+    return jsonify([to_dict(payment) for payment in payments]), 200
+
+@app.route('/payments/<uuid:payment_id>', methods=['GET'])
+def get_payment(payment_id):
+    payment = Payment.query.get_or_404(payment_id)
+    return jsonify(to_dict(payment)), 200
+
+@app.route('/payments/<uuid:payment_id>', methods=['PUT'])
+def update_payment(payment_id):
+    data = request.get_json()
+    payment = Payment.query.get_or_404(payment_id)
+    if 'user_id' in data:
+        payment.user_id = data['user_id']
+    if 'subscription_id' in data:
+        payment.subscription_id = data['subscription_id']
+    if 'amount' in data:
+        payment.amount = data['amount']
+    if 'expires_at' in data:
+        payment.expires_at = data['expires_at']
+    if 'payment_type' in data:
+        payment.payment_type = data['payment_type']
+    db.session.commit()
+    return jsonify(to_dict(payment)), 200
+
+@app.route('/payments/<uuid:payment_id>', methods=['DELETE'])
+def delete_payment(payment_id):
+    payment = Payment.query.get_or_404(payment_id)
+    db.session.delete(payment)
+    db.session.commit()
+    return '', 204
+
+
+# Choice CRUD Operations
+@app.route('/choices', methods=['POST'])
+def create_choice():
+    data = request.get_json()
+    new_choice = Choice(
+        text=data['text'],
+        question_id=data['question_id'],
+        is_correct=data.get('is_correct', False)
+    )
+    db.session.add(new_choice)
+    db.session.commit()
+    return jsonify(to_dict(new_choice)), 201
+
+
+
+@app.route('/choices', methods=['GET'])
+def get_choices():
+    choices = Choice.query.all()
+    return jsonify([to_dict(choice) for choice in choices]), 200
+
+
+@app.route('/choices/<uuid:choice_id>', methods=['GET'])
+def get_choice(choice_id):
+    choice = Choice.query.get_or_404(choice_id)
+    return jsonify(to_dict(choice)), 200
+
+@app.route('/choices/<uuid:choice_id>', methods=['PUT'])
+def update_choice(choice_id):
+    data = request.get_json()
+    choice = Choice.query.get_or_404(choice_id)
+    if 'text' in data:
+        choice.text = data['text']
+    if 'question_id' in data:
+        choice.question_id = data['question_id']
+    if 'is_correct' in data:
+        choice.is_correct = data['is_correct']
+    db.session.commit()
+    return jsonify(to_dict(choice)), 200
+
+@app.route('/choices/<uuid:choice_id>', methods=['DELETE'])
+def delete_choice(choice_id):
+    choice = Choice.query.get_or_404(choice_id)
+    db.session.delete(choice)
+    db.session.commit()
+    return '', 204
+
+
+# AnswerMetadata CRUD Operations
+@app.route('/answer_metadata', methods=['POST'])
+def create_answer_metadata():
+    data = request.get_json()
+    new_answer_metadata = AnswerMetadata(
+        question_id=data['question_id'],
+        answer_id=data['answer_id'],
+        metadata=data.get('metadata')
+    )
+    db.session.add(new_answer_metadata)
+    db.session.commit()
+    return jsonify(to_dict(new_answer_metadata)), 201
+
+@app.route('/answer_metadata', methods=['GET'])
+def get_answer_metadata():
+    answer_metadata = AnswerMetadata.query.all()
+    return jsonify([to_dict(am) for am in answer_metadata]), 200
+
+@app.route('/answer_metadata/<uuid:answer_metadata_id>', methods=['GET'])
+def get_answer_metadata_by_id(answer_metadata_id):
+    answer_metadata = AnswerMetadata.query.get_or_404(answer_metadata_id)
+    return jsonify(to_dict(answer_metadata)), 200
+
+@app.route('/answer_metadata/<uuid:answer_metadata_id>', methods=['PUT'])
+def update_answer_metadata(answer_metadata_id):
+    data = request.get_json()
+    answer_metadata = AnswerMetadata.query.get_or_404(answer_metadata_id)
+    if 'question_id' in data:
+        answer_metadata.question_id = data['question_id']
+    if 'answer_id' in data:
+        answer_metadata.answer_id = data['answer_id']
+    if 'metadata' in data:
+        answer_metadata.metadata = data['metadata']
+    db.session.commit()
+    return jsonify(to_dict(answer_metadata)), 200
+
+@app.route('/answer_metadata/<uuid:answer_metadata_id>', methods=['DELETE'])
+def delete_answer_metadata(answer_metadata_id):
+    answer_metadata = AnswerMetadata.query.get_or_404(answer_metadata_id)
+    db.session.delete(answer_metadata)
+    db.session.commit()
+    return '', 204
+
+
 
 
 
