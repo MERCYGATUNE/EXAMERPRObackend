@@ -7,22 +7,25 @@ from datetime import datetime, timedelta
 import bcrypt
 import stripe
 import logging
+from dotenv import load_dotenv
+import os
 from uuid import UUID
 
 from flask_mail import Mail, Message
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
+load_dotenv()
 
-app.config['SECRET_KEY'] = 'jm$nh#.3!Vfp[Y7BE9qZ='
-app.config['SECURITY_PASSWORD_SALT'] = app.config['SECRET_KEY']
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SECURITY_PASSWORD_SALT'] = os.getenv('SECURITY_PASSWORD_SALT')
 
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 25
-app.config['MAIL_USERNAME'] = 'examerpro@gmail.com'
-app.config['MAIL_PASSWORD'] = 'aghu rdsk jxqa encf'
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == True
+app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL') == False
 
 mail = Mail(app)
 def send_email(to, subject, body):
@@ -35,7 +38,7 @@ CORS(app)
 db.init_app(app)
 migrate.init_app(app, db)
 
-stripe.api_key = 'sk_test_51PjhmdP37OVIoVumn7HC1Zu1b3mqGXNk0oZ06SppkQ6P4yUaDlm50C3Qka2Qp9uOPAyGYDmFQRHfWzGHBAecwJy700RrFGr5fh'
+stripe.api_key = os.getenv('STRIPE_API_KEY')
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
