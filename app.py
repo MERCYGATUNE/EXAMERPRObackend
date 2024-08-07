@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime, timedelta
 import bcrypt
 import stripe
+import logging
 from uuid import UUID
 
 from flask_mail import Mail, Message
@@ -34,7 +35,10 @@ CORS(app)
 db.init_app(app)
 migrate.init_app(app, db)
 
-stripe.api_key = 'your-secret-key-here'
+stripe.api_key = 'sk_test_51PjhmdP37OVIoVumn7HC1Zu1b3mqGXNk0oZ06SppkQ6P4yUaDlm50C3Qka2Qp9uOPAyGYDmFQRHfWzGHBAecwJy700RrFGr5fh'
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -80,7 +84,7 @@ def login():
         stored_password = user.password.encode('utf-8')
         if bcrypt.checkpw(password.encode('utf-8'), stored_password):
             send_email(email, 'Login Notification', 'You have logged in successfully!')
-            return jsonify({'message': 'Login successful'}), 200
+            return jsonify({'message': 'Login successful', "user_id": user.id}), 200
         else:
             return jsonify({'error': 'Invalid email or password'}), 401
     return jsonify({'error': 'Invalid email or password'}), 401
@@ -93,37 +97,69 @@ def create_subscription():
     payment_method_id = data.get('payment_method_id')
     amount = data.get('amount')
 
+    if user_id == 'undefined':
+        return jsonify({'error': 'Invalid User ID'}), 400
     if not user_id or not payment_method_id or not amount:
         return jsonify({'error': 'User ID, payment method, and amount are required'}), 400
 
-    user = User.query.get(user_id)
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        return jsonify({'error': 'Invalid User ID format'}), 400
+
+    user = User.query.get(user_uuid)
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
     try:
-        # Create a Payment Intent
+        amount_cents = int(float(amount) * 100)
+
+    
+
         payment_intent = stripe.PaymentIntent.create(
-            amount=int(amount * 100),  # Stripe expects the amount in cents
-            currency='kes',  # Use 'kes' for Kenyan Shilling
+            amount=amount_cents, 
+            currency='kes',  
             payment_method=payment_method_id,
             confirm=True,
+            automatic_payment_methods={
+                'enabled': True,
+                'allow_redirects': 'never'
+            }
         )
 
         # Create a new subscription
         new_subscription = Subscription(
             id=uuid.uuid4(),
-            user_id=user_id,
+            user_id=user_uuid,
             type='premium',  # Adjust based on your subscription types
-            amount=amount,
+            amount=amount_cents,
             created_at=datetime.utcnow(),
             expires_at=datetime.utcnow() + timedelta(days=30)
         )
+        if amount == 65:
+            user.role = 'student'
+            user.referral_code = str(uuid.uuid4())
+            send_email(user.email, 'ExamerPro™ - Your Student Account', 'Congratulations! You have successfully created a student account.')
+        if amount == 150:
+            user.role = 'examiner'
+            user.referral_code = str(uuid.uuid4())
+            send_email(user.email, 'ExamerPro™ - Your Examiner Account', 'Congratulations! You have successfully created an examiner account.')
+        
         db.session.add(new_subscription)
         db.session.commit()
 
-        return jsonify({'success': True, 'subscription_id': new_subscription.id}), 201
+        return jsonify({'success': True, 'subscription_id': str(new_subscription.id)}), 201
+
     except stripe.error.CardError as e:
-        return jsonify({'success': False, 'error': f'Card error: {str(e)}'}), 400
+        return jsonify({'success': False, 'error': f'Card error: {e.user_message}'}), 400
+    except stripe.error.RateLimitError as e:
+        return jsonify({'success': False, 'error': 'Too many requests to the API. Please try again later.'}), 429
+    except stripe.error.InvalidRequestError as e:
+        return jsonify({'success': False, 'error': 'Invalid parameters. Please check your input and try again.'}), 400
+    except stripe.error.AuthenticationError as e:
+        return jsonify({'success': False, 'error': 'Authentication with Stripe API failed. Please try again later.'}), 401
+    except stripe.error.APIConnectionError as e:
+        return jsonify({'success': False, 'error': 'Network communication with Stripe failed. Please try again later.'}), 502
     except stripe.error.StripeError as e:
         return jsonify({'success': False, 'error': 'Payment failed. Please try again.'}), 400
     except Exception as e:
@@ -535,7 +571,7 @@ def reset_password():
         return jsonify({"message": "User not found"}), 404
     token = generate_reset_token(email)
     reset_url = reset_url = f"http://localhost:3000/reset-password/{token}"
-    send_email(email, 'Password Reset Request', f'Click the link to reset your password: {reset_url} \n You have exactly 1 hour to reset this password \n \n Ignore this email if you did not initialize this.')
+    send_email(email, 'Password Reset Request', f'Click the link to reset your password: {reset_url} \n \n You have exactly 1 hour to reset this password \n \n Ignore this email if you did not initialize this.')
 
     return jsonify({"message": "Password reset email sent."}), 200
 
@@ -555,6 +591,8 @@ def reset_with_token(token):
         return jsonify({"message": "Password has been reset."}), 200
     else:
         return jsonify({"message": "User not found"}), 404
+    
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5555)
