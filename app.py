@@ -37,10 +37,16 @@ print("MAIL_USE_TLS:", os.getenv('MAIL_USE_TLS'))
 print("MAIL_USE_SSL:", os.getenv('MAIL_USE_SSL'))
 print("STRIPE_API_KEY:", os.getenv('STRIPE_API_KEY'))
 
+# app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+# app.config['MAIL_PORT'] = 25
+# app.config['MAIL_USERNAME'] = 'examerpro@gmail.com'
+# app.config['MAIL_PASSWORD'] = 'aghu rdsk jxqa encf'
+# app.config['MAIL_USE_TLS'] = True
+# app.config['MAIL_USE_SSL'] = False
 
 mail = Mail(app)
 def send_email(to, subject, body):
-    msg = Message(subject, sender="examerpro@gmail.com", recipients=[to])
+    msg = Message(subject, sender=app.config['MAIL_USERNAME'], recipients=[to])
     msg.body = body
     mail.send(msg)
 
