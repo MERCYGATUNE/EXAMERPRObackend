@@ -20,19 +20,23 @@ load_dotenv()
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SECURITY_PASSWORD_SALT'] = os.getenv('SECURITY_PASSWORD_SALT')
 
-# app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
-# app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
-# app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-# app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-# app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == True
-# app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL') == False
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS').lower() == 'true'
+app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL').lower() == 'false'
 
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 25
-app.config['MAIL_USERNAME'] = 'examerpro@gmail.com'
-app.config['MAIL_PASSWORD'] = 'aghu rdsk jxqa encf'
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
+print("SECRET_KEY:", os.getenv('SECRET_KEY'))
+print("SECURITY_PASSWORD_SALT:", os.getenv('SECURITY_PASSWORD_SALT'))
+print("MAIL_SERVER:", os.getenv('MAIL_SERVER'))
+print("MAIL_PORT:", os.getenv('MAIL_PORT'))
+print("MAIL_USERNAME:", os.getenv('MAIL_USERNAME'))
+print("MAIL_PASSWORD:", os.getenv('MAIL_PASSWORD'))
+print("MAIL_USE_TLS:", os.getenv('MAIL_USE_TLS'))
+print("MAIL_USE_SSL:", os.getenv('MAIL_USE_SSL'))
+print("STRIPE_API_KEY:", os.getenv('STRIPE_API_KEY'))
+
 
 mail = Mail(app)
 def send_email(to, subject, body):
