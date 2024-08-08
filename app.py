@@ -6,15 +6,27 @@ import uuid
 from datetime import datetime, timedelta
 import bcrypt
 import stripe
+import logging
+from dotenv import load_dotenv
+import os
 from uuid import UUID
 
 from flask_mail import Mail, Message
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
+load_dotenv()
 
-app.config['SECRET_KEY'] = 'jm$nh#.3!Vfp[Y7BE9qZ='
-app.config['SECURITY_PASSWORD_SALT'] = app.config['SECRET_KEY']
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SECURITY_PASSWORD_SALT'] = os.getenv('SECURITY_PASSWORD_SALT')
+
+# app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+# app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
+# app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+# app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+# app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS').lower() == 'true'
+# app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL').lower() == 'false'
+
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 25
@@ -25,7 +37,7 @@ app.config['MAIL_USE_SSL'] = False
 
 mail = Mail(app)
 def send_email(to, subject, body):
-    msg = Message(subject, sender="examerpro@gmail.com", recipients=[to])
+    msg = Message(subject, sender=app.config['MAIL_USERNAME'], recipients=[to])
     msg.body = body
     mail.send(msg)
 
@@ -34,16 +46,20 @@ CORS(app)
 db.init_app(app)
 migrate.init_app(app, db)
 
-stripe.api_key = 'your-secret-key-here'
+stripe.api_key = os.getenv('STRIPE_API_KEY')
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+    username = data.get('username')
 
-    if not email or not password:
-        return jsonify({'error': 'Email and password are required'}), 400
+    if not email or not password or not username:
+        return jsonify({'error': 'Email, Username and password are required'}), 400
 
     if User.query.filter_by(email=email).first():
         return jsonify({'error': 'Email already in use'}), 400
@@ -54,6 +70,7 @@ def register():
         id=uuid.uuid4(),
         email=email,
         password=hashed_password.decode('utf-8'),
+        username=username,
         confirmed_email=False,
         role='user',
         referral_code=None,
@@ -80,7 +97,12 @@ def login():
         stored_password = user.password.encode('utf-8')
         if bcrypt.checkpw(password.encode('utf-8'), stored_password):
             send_email(email, 'Login Notification', 'You have logged in successfully!')
-            return jsonify({'message': 'Login successful'}), 200
+            return jsonify({
+                'message': 'Login successful',
+                "user_id": user.id,
+                "role": user.role,
+                "email": user.email,
+                "username": user.username}), 200
         else:
             return jsonify({'error': 'Invalid email or password'}), 401
     return jsonify({'error': 'Invalid email or password'}), 401
@@ -93,37 +115,69 @@ def create_subscription():
     payment_method_id = data.get('payment_method_id')
     amount = data.get('amount')
 
+    if user_id == 'undefined':
+        return jsonify({'error': 'Invalid User ID'}), 400
     if not user_id or not payment_method_id or not amount:
         return jsonify({'error': 'User ID, payment method, and amount are required'}), 400
 
-    user = User.query.get(user_id)
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        return jsonify({'error': 'Invalid User ID format'}), 400
+
+    user = User.query.get(user_uuid)
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
     try:
-        # Create a Payment Intent
+        amount_cents = int(float(amount) * 100)
+
+    
+
         payment_intent = stripe.PaymentIntent.create(
-            amount=int(amount * 100),  # Stripe expects the amount in cents
-            currency='kes',  # Use 'kes' for Kenyan Shilling
+            amount=amount_cents, 
+            currency='kes',  
             payment_method=payment_method_id,
             confirm=True,
+            automatic_payment_methods={
+                'enabled': True,
+                'allow_redirects': 'never'
+            }
         )
 
         # Create a new subscription
         new_subscription = Subscription(
             id=uuid.uuid4(),
-            user_id=user_id,
+            user_id=user_uuid,
             type='premium',  # Adjust based on your subscription types
-            amount=amount,
+            amount=amount_cents,
             created_at=datetime.utcnow(),
             expires_at=datetime.utcnow() + timedelta(days=30)
         )
+        if amount == 65:
+            user.role = 'student'
+            user.referral_code = str(uuid.uuid4())
+            send_email(user.email, 'ExamerPro™ - Your Student Account', 'Congratulations! You have successfully created a student account.')
+        if amount == 150:
+            user.role = 'examiner'
+            user.referral_code = str(uuid.uuid4())
+            send_email(user.email, 'ExamerPro™ - Your Examiner Account', 'Congratulations! You have successfully created an examiner account.')
+        
         db.session.add(new_subscription)
         db.session.commit()
 
-        return jsonify({'success': True, 'subscription_id': new_subscription.id}), 201
+        return jsonify({'success': True, 'subscription_id': str(new_subscription.id)}), 201
+
     except stripe.error.CardError as e:
-        return jsonify({'success': False, 'error': f'Card error: {str(e)}'}), 400
+        return jsonify({'success': False, 'error': f'Card error: {e.user_message}'}), 400
+    except stripe.error.RateLimitError as e:
+        return jsonify({'success': False, 'error': 'Too many requests to the API. Please try again later.'}), 429
+    except stripe.error.InvalidRequestError as e:
+        return jsonify({'success': False, 'error': 'Invalid parameters. Please check your input and try again.'}), 400
+    except stripe.error.AuthenticationError as e:
+        return jsonify({'success': False, 'error': 'Authentication with Stripe API failed. Please try again later.'}), 401
+    except stripe.error.APIConnectionError as e:
+        return jsonify({'success': False, 'error': 'Network communication with Stripe failed. Please try again later.'}), 502
     except stripe.error.StripeError as e:
         return jsonify({'success': False, 'error': 'Payment failed. Please try again.'}), 400
     except Exception as e:
@@ -535,7 +589,7 @@ def reset_password():
         return jsonify({"message": "User not found"}), 404
     token = generate_reset_token(email)
     reset_url = reset_url = f"http://localhost:3000/reset-password/{token}"
-    send_email(email, 'Password Reset Request', f'Click the link to reset your password: {reset_url} \n You have exactly 1 hour to reset this password \n \n Ignore this email if you did not initialize this.')
+    send_email(email, 'Password Reset Request', f'Click the link to reset your password: {reset_url} \n \n You have exactly 1 hour to reset this password \n \n Ignore this email if you did not initialize this.')
 
     return jsonify({"message": "Password reset email sent."}), 200
 
@@ -555,6 +609,51 @@ def reset_with_token(token):
         return jsonify({"message": "Password has been reset."}), 200
     else:
         return jsonify({"message": "User not found"}), 404
+    
+@app.route('/change_username', methods=['POST'])
+def change_username():
+    data = request.get_json()
+    current_user_id = data['user_id']
+    current_user_uuid = uuid.UUID(current_user_id)
+    new_username = data['new_username']
+    user = User.query.filter_by(id=current_user_uuid).first()
+    if user:
+        user.username = new_username
+        db.session.commit()
+        return jsonify({"message": "Username has been changed."}), 200
+    else:
+        return jsonify({"message": "User not found"}), 404
+
+
+@app.route('/change_email', methods=['POST'])
+def change_email():
+    data = request.get_json()
+    current_user_id = data['user_id']
+    current_user_uuid = uuid.UUID(current_user_id)
+    new_email = data['new_email']
+    if User.query.filter_by(email=new_email).first():
+        return jsonify({'error': 'Email already in use'}), 400
+    user = User.query.filter_by(id=current_user_uuid).first()
+    if user:
+        user.email = new_email
+        db.session.commit()
+        return jsonify({"message": "Email has been changed."}), 200
+    else:
+        return jsonify({"message": "User not found"}), 404
+
+@app.route('/delete_account', methods=['POST'])
+def delete_account():
+    data = request.get_json()
+    current_user_id = data['user_id']
+    current_user_uuid = uuid.UUID(current_user_id)
+    user = User.query.filter_by(id=current_user_uuid).first()
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({"message": "Account has been deleted."}), 200
+    else:
+        return jsonify({"message": "User not found"}), 404
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5555)

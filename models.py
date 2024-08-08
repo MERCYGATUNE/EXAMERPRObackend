@@ -13,6 +13,7 @@ migrate = Migrate()
 class User(db.Model):
     __tablename__ = 'users'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    username = Column(String, nullable=False)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
     confirmed_email = Column(Boolean, default=False)
@@ -22,7 +23,7 @@ class User(db.Model):
 
     profile = relationship("Profile", back_populates="user", uselist=False)
     notifications = relationship("Notification", back_populates="user")
-    subscriptions = relationship("Subscription", back_populates="user")
+    subscriptions = relationship("Subscription", back_populates="user", cascade='all, delete')
     payments = relationship("Payment", back_populates="user")
     scores = relationship("Score", back_populates="user")
     resources = relationship("Resource", back_populates="user")
