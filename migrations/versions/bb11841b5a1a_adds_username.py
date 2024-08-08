@@ -1,8 +1,8 @@
-"""update
+"""adds username
 
-Revision ID: cc55c25ae632
+Revision ID: bb11841b5a1a
 Revises: 
-Create Date: 2024-07-30 15:15:27.252000
+Create Date: 2024-08-08 12:01:26.879663
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'cc55c25ae632'
+revision = 'bb11841b5a1a'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -23,7 +23,7 @@ def upgrade():
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('supporting_image', sa.String(), nullable=True),
     sa.Column('answer_id', sa.UUID(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
@@ -31,7 +31,7 @@ def upgrade():
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('choice', sa.Text(), nullable=True),
     sa.Column('answer_id', sa.UUID(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
@@ -46,7 +46,7 @@ def upgrade():
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('paragraph', sa.Text(), nullable=True),
     sa.Column('answer_id', sa.UUID(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
@@ -56,7 +56,7 @@ def upgrade():
     sa.Column('topic_id', sa.UUID(), nullable=True),
     sa.Column('mode', sa.String(), nullable=True),
     sa.Column('exam_mode', sa.String(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('referral',
@@ -78,8 +78,8 @@ def upgrade():
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=True),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('user_id', sa.UUID(), nullable=True),
-    sa.Column('sub_category_id', sa.UUID(), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('sub_category_id', sa.UUID(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('users',
@@ -89,15 +89,16 @@ def upgrade():
     sa.Column('confirmed_email', sa.Boolean(), nullable=True),
     sa.Column('role', sa.String(), nullable=True),
     sa.Column('referral_code', sa.String(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('email')
     )
     op.create_table('answers',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('question_id', sa.UUID(), nullable=True),
     sa.Column('answer_type', sa.String(), nullable=True),
     sa.Column('answer', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['question_id'], ['questions.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -114,12 +115,12 @@ def upgrade():
     )
     op.create_table('notification',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('user_id', sa.UUID(), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('subject', sa.String(), nullable=True),
     sa.Column('body', sa.Text(), nullable=True),
     sa.Column('sender_id', sa.UUID(), nullable=True),
     sa.Column('sender_name', sa.String(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -135,45 +136,45 @@ def upgrade():
     )
     op.create_table('payment',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('user_id', sa.UUID(), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('subscription_id', sa.UUID(), nullable=True),
     sa.Column('amount', sa.Float(), nullable=True),
     sa.Column('expires_at', sa.DateTime(), nullable=True),
     sa.Column('payment_type', sa.String(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('profile',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('user_id', sa.UUID(), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('first_name', sa.String(), nullable=True),
     sa.Column('last_name', sa.String(), nullable=True),
     sa.Column('photo_url', sa.String(), nullable=True),
     sa.Column('title', sa.String(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('resource',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('topic_id', sa.UUID(), nullable=True),
-    sa.Column('user_id', sa.UUID(), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('resource_type', sa.String(), nullable=True),
     sa.Column('short_desc', sa.String(), nullable=True),
     sa.Column('details', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('score',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('user_id', sa.UUID(), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('topic_id', sa.UUID(), nullable=True),
     sa.Column('possible_score', sa.Float(), nullable=True),
     sa.Column('user_score', sa.Float(), nullable=True),
     sa.Column('completion_rate', sa.Float(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -181,16 +182,16 @@ def upgrade():
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('type', sa.String(), nullable=True),
     sa.Column('amount', sa.Float(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('expires_at', sa.DateTime(), nullable=True),
-    sa.Column('user_id', sa.UUID(), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('useranswers',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('question_id', sa.UUID(), nullable=True),
-    sa.Column('user_id', sa.UUID(), nullable=True),
+    sa.Column('question_id', sa.UUID(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('answer_type', sa.String(), nullable=True),
     sa.Column('answer', sa.Text(), nullable=True),
     sa.Column('attempts', sa.Integer(), nullable=True),
@@ -200,7 +201,7 @@ def upgrade():
     )
     op.create_table('userchoice',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('question_id', sa.UUID(), nullable=True),
+    sa.Column('question_id', sa.UUID(), nullable=False),
     sa.Column('choice', sa.Text(), nullable=True),
     sa.Column('answer_id', sa.UUID(), nullable=True),
     sa.ForeignKeyConstraint(['question_id'], ['questions.id'], ),
@@ -208,7 +209,7 @@ def upgrade():
     )
     op.create_table('userparagraph',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('question_id', sa.UUID(), nullable=True),
+    sa.Column('question_id', sa.UUID(), nullable=False),
     sa.Column('paragraph', sa.Text(), nullable=True),
     sa.Column('answer_id', sa.UUID(), nullable=True),
     sa.ForeignKeyConstraint(['question_id'], ['questions.id'], ),

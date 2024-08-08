@@ -21,11 +21,12 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SECURITY_PASSWORD_SALT'] = os.getenv('SECURITY_PASSWORD_SALT')
 
 # app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
-# app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
+# app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
 # app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 # app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-# app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == True
-# app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL') == False
+# app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS').lower() == 'true'
+# app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL').lower() == 'false'
+
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 25
@@ -36,7 +37,7 @@ app.config['MAIL_USE_SSL'] = False
 
 mail = Mail(app)
 def send_email(to, subject, body):
-    msg = Message(subject, sender="examerpro@gmail.com", recipients=[to])
+    msg = Message(subject, sender=app.config['MAIL_USERNAME'], recipients=[to])
     msg.body = body
     mail.send(msg)
 
@@ -55,9 +56,10 @@ def register():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+    username = data.get('username')
 
-    if not email or not password:
-        return jsonify({'error': 'Email and password are required'}), 400
+    if not email or not password or not username:
+        return jsonify({'error': 'Email, Username and password are required'}), 400
 
     if User.query.filter_by(email=email).first():
         return jsonify({'error': 'Email already in use'}), 400
@@ -68,6 +70,7 @@ def register():
         id=uuid.uuid4(),
         email=email,
         password=hashed_password.decode('utf-8'),
+        username=username,
         confirmed_email=False,
         role='user',
         referral_code=None,
@@ -94,7 +97,12 @@ def login():
         stored_password = user.password.encode('utf-8')
         if bcrypt.checkpw(password.encode('utf-8'), stored_password):
             send_email(email, 'Login Notification', 'You have logged in successfully!')
-            return jsonify({'message': 'Login successful', "user_id": user.id}), 200
+            return jsonify({
+                'message': 'Login successful',
+                "user_id": user.id,
+                "role": user.role,
+                "email": user.email,
+                "username": user.username}), 200
         else:
             return jsonify({'error': 'Invalid email or password'}), 401
     return jsonify({'error': 'Invalid email or password'}), 401
@@ -602,6 +610,49 @@ def reset_with_token(token):
     else:
         return jsonify({"message": "User not found"}), 404
     
+@app.route('/change_username', methods=['POST'])
+def change_username():
+    data = request.get_json()
+    current_user_id = data['user_id']
+    current_user_uuid = uuid.UUID(current_user_id)
+    new_username = data['new_username']
+    user = User.query.filter_by(id=current_user_uuid).first()
+    if user:
+        user.username = new_username
+        db.session.commit()
+        return jsonify({"message": "Username has been changed."}), 200
+    else:
+        return jsonify({"message": "User not found"}), 404
+
+
+@app.route('/change_email', methods=['POST'])
+def change_email():
+    data = request.get_json()
+    current_user_id = data['user_id']
+    current_user_uuid = uuid.UUID(current_user_id)
+    new_email = data['new_email']
+    if User.query.filter_by(email=new_email).first():
+        return jsonify({'error': 'Email already in use'}), 400
+    user = User.query.filter_by(id=current_user_uuid).first()
+    if user:
+        user.email = new_email
+        db.session.commit()
+        return jsonify({"message": "Email has been changed."}), 200
+    else:
+        return jsonify({"message": "User not found"}), 404
+
+@app.route('/delete_account', methods=['POST'])
+def delete_account():
+    data = request.get_json()
+    current_user_id = data['user_id']
+    current_user_uuid = uuid.UUID(current_user_id)
+    user = User.query.filter_by(id=current_user_uuid).first()
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({"message": "Account has been deleted."}), 200
+    else:
+        return jsonify({"message": "User not found"}), 404
 
 
 if __name__ == '__main__':
