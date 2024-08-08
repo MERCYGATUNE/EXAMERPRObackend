@@ -1,14 +1,201 @@
+from sqlalchemy import Column, Text, UUID, DateTime
+import uuid
+from datetime import datetime
+
+
+db = SQLAlchemy()
+
+class Questions(db.Model):
+    __tablename__ = 'questions'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question = Column(Text)
+    topic_id = Column(UUID(as_uuid=True))
+    mode = Column(String)
+    exam_mode = Column(String)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    answers = relationship("Answers", back_populates="question")
+    comments = relationship("Comment", back_populates="question")
+    user_answers = relationship("UserAnswers", back_populates="question")
+
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'question': self.question,
+            'topic_id': str(self.topic_id) if self.topic_id else None,
+            'mode': self.mode,
+            'exam_mode': self.exam_mode,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            
+        }
 
 
 
+class Answers(db.Model):
+    __tablename__ = 'answers'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'))
+    answer_type = Column(String)
+    answer = Column(Text)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    question = relationship("Questions", back_populates="answers")
+
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'question_id': str(self.question_id),
+            'answer_type': self.answer_type,
+            'answer': self.answer,
+            'created_at': self.created_at.isoformat()
+        }
 
 
+class UserAnswers(db.Model):
+    __tablename__ = 'useranswers'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    answer_type = Column(String)
+    answer = Column(Text)
+    attempts = Column(Integer)
+    
+    question = relationship("Questions", back_populates="user_answers")
+    user = relationship("User", back_populates="user_answers")
+    
+def to_dict(self):
+        return {
+            'id': self.id,
+            'question_id': self.question_id,
+            'user_id': self.user_id,
+            'answer_type': self.answer_type,
+            'answer': self.answer,
+            'attempts': self.attempts
+        }    
+    
+    
 
+class UserParagraph(db.Model):
+    __tablename__ = 'userparagraph'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'), nullable=False)
+    paragraph = Column(Text)
+    answer_id = Column(UUID(as_uuid=True))
+    
+def to_dict(self):
+        return {
+            'id': self.id,
+            'question_id': self.question_id,
+            'paragraph': self.paragraph,
+            'answer_id': self.answer_id
+        }    
+    
 
+class UserChoice(db.Model):
+    __tablename__ = 'userchoice'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'), nullable=False)
+    choice = Column(Text)
+    answer_id = Column(UUID(as_uuid=True))
+    
+def to_dict(self):
+        return {
+            'id': self.id,
+            'question_id': self.question_id,
+            'choice': self.choice,
+            'answer_id': self.answer_id
+        }    
+
+class Topic(db.Model):
+    __tablename__ = 'topic'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String)
+    description = Column(Text)
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+    sub_category_id = Column(UUID(as_uuid=True), nullable=False)
+    
+def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'user_id': self.user_id,
+            'sub_category_id': self.sub_category_id
+        }    
+    
+
+class SubCategory(db.Model):
+    __tablename__ = 'subcategory'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String)
+    description = Column(Text)
+    user_id = Column(UUID(as_uuid=True))
+    exam_category_id = Column(UUID(as_uuid=True))
+    
+def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'user_id': self.user_id,
+            'exam_category_id': self.exam_category_id
+        }    
+    
+
+class ExamCategory(db.Model):
+    __tablename__ = 'examcategory'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String)
+    description = Column(Text)
+    user_id = Column(UUID(as_uuid=True))
+    
+def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'user_id': self.user_id
+        }    
+        
+class Choice(db.Model):
+    __tablename__ = 'choice'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    choice = Column(Text)
+    answer_id = Column(UUID(as_uuid=True))
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime)
+    
+def to_dict(self):
+        return {
+            'id': self.id,
+            'choice': self.choice,
+            'answer_id': self.answer_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }    
+    
+
+class Paragraph(db.Model):
+    __tablename__ = 'paragraph'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    paragraph = Column(Text)
+    answer_id = Column(UUID(as_uuid=True))
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime)
+
+def to_dict(self):
+        return {
+            'id': self.id,
+            'paragraph': self.paragraph,
+            'answer_id': self.answer_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
 
 
 
 @app.route('/examcategories', methods=['POST'])
+
 def create_exam_category():
     data = request.get_json()
     
@@ -43,6 +230,7 @@ def create_exam_category():
         return jsonify({"error": str(e)}), 500
     
 @app.route('/examcategories/<uuid:exam_category_id>', methods=['PUT'])
+
 def update_exam_category(exam_category_id):
     data = request.get_json()
     exam_category = ExamCategory.query.get(exam_category_id)
@@ -67,6 +255,7 @@ def update_exam_category(exam_category_id):
 
 
 @app.route('/examcategories/<uuid:exam_category_id>', methods=['DELETE'])
+
 def delete_exam_category(exam_category_id):
     exam_category = ExamCategory.query.get(exam_category_id)
     if not exam_category:
@@ -79,7 +268,9 @@ def delete_exam_category(exam_category_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    
 @app.route('/subcategories', methods=['GET'])
+
 def get_subcategories():
     subcategories = SubCategory.query.all()
     return jsonify([{
@@ -91,6 +282,7 @@ def get_subcategories():
     } for sc in subcategories])
     
  @app.route('/subcategories', methods=['POST'])
+ 
 def create_subcategory():
     data = request.get_json()
     
@@ -126,7 +318,9 @@ def create_subcategory():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    
 @app.route('/subcategories/<uuid:sub_category_id>', methods=['PUT'])
+
 def update_subcategory(sub_category_id):
     data = request.get_json()
     sub_category = SubCategory.query.get(sub_category_id)
@@ -152,6 +346,7 @@ def update_subcategory(sub_category_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/subcategories/<uuid:sub_category_id>', methods=['DELETE'])
+
 def delete_subcategory(sub_category_id):
     sub_category = SubCategory.query.get(sub_category_id)
     if not sub_category:
@@ -165,13 +360,10 @@ def delete_subcategory(sub_category_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500  
     
-    
-    
-    
-    
-    
+
  
 @app.route('/topics', methods=['POST'])
+
 def create_topic():
     data = request.get_json()
     
@@ -210,6 +402,7 @@ def create_topic():
     
     
  @app.route('/questions', methods=['POST'])
+ 
 def create_question():
     data = request.get_json()
     new_question = Questions(
@@ -224,6 +417,7 @@ def create_question():
     return jsonify(new_question.to_dict()), 201
 
 @app.route('/questions/<uuid:question_id>', methods=['PUT'])
+
 def update_question(question_id):
     data = request.get_json()
     question = Questions.query.get(question_id)
@@ -238,6 +432,7 @@ def update_question(question_id):
         return jsonify({"error": "Question not found"}), 404
 
 @app.route('/questions/<uuid:question_id>', methods=['DELETE'])
+
 def delete_question(question_id):
     question = Questions.query.get(question_id)
     if question:
@@ -250,11 +445,13 @@ def delete_question(question_id):
 
 # Routes for UserAnswers
 @app.route('/useranswers', methods=['GET'])
+
 def get_user_answers():
     user_answers = UserAnswers.query.all()
     return jsonify([user_answer.to_dict() for user_answer in user_answers])
 
 @app.route('/useranswers/<uuid:user_answer_id>', methods=['GET'])
+
 def get_user_answer(user_answer_id):
     user_answer = UserAnswers.query.get(user_answer_id)
     if user_answer:
@@ -263,6 +460,7 @@ def get_user_answer(user_answer_id):
         return jsonify({"error": "User Answer not found"}), 404
 
 @app.route('/useranswers', methods=['POST'])
+
 def create_user_answer():
     data = request.get_json()
     new_user_answer = UserAnswers(
@@ -277,6 +475,7 @@ def create_user_answer():
     return jsonify(new_user_answer.to_dict()), 201
 
 @app.route('/useranswers/<uuid:user_answer_id>', methods=['PUT'])
+
 def update_user_answer(user_answer_id):
     data = request.get_json()
     user_answer = UserAnswers.query.get(user_answer_id)
@@ -290,6 +489,7 @@ def update_user_answer(user_answer_id):
         return jsonify({"error": "User Answer not found"}), 404
 
 @app.route('/useranswers/<uuid:user_answer_id>', methods=['DELETE'])
+
 def delete_user_answer(user_answer_id):
     user_answer = UserAnswers.query.get(user_answer_id)
     if user_answer:
@@ -302,6 +502,7 @@ def delete_user_answer(user_answer_id):
 
 # Score CRUD Operations
 @app.route('/scores', methods=['POST'])
+
 def create_score():
     data = request.get_json()
     new_score = Score(
@@ -316,16 +517,19 @@ def create_score():
     return jsonify(to_dict(new_score)), 201
 
 @app.route('/scores', methods=['GET'])
+
 def get_scores():
     scores = Score.query.all()
     return jsonify([to_dict(score) for score in scores]), 200
 
 @app.route('/scores/<uuid:score_id>', methods=['GET'])
+
 def get_score(score_id):
     score = Score.query.get_or_404(score_id)
     return jsonify(to_dict(score)), 200
 
 @app.route('/scores/<uuid:score_id>', methods=['PUT'])
+
 def update_score(score_id):
     data = request.get_json()
     score = Score.query.get_or_404(score_id)
@@ -343,14 +547,16 @@ def update_score(score_id):
     return jsonify(to_dict(score)), 200
 
 @app.route('/scores/<uuid:score_id>', methods=['DELETE'])
+
 def delete_score(score_id):
-    score = Score.query.get_or_404(score_id)
+    score = score.query.get_or_404(score_id)
     db.session.delete(score)
     db.session.commit()
     return '', 204
 
 # Questions CRUD Operations
 @app.route('/questions', methods=['POST'])
+
 def create_question():
     data = request.get_json()
     new_question = Questions(
@@ -363,6 +569,7 @@ def create_question():
 
 
 @app.route('/questions/<uuid:question_id>', methods=['PUT'])
+
 def update_question(question_id):
     data = request.get_json()
     question = Questions.query.get_or_404(question_id)
@@ -374,6 +581,7 @@ def update_question(question_id):
     return jsonify(to_dict(question)), 200
 
 @app.route('/questions/<uuid:question_id>', methods=['DELETE'])
+
 def delete_question(question_id):
     question = Questions.query.get_or_404(question_id)
     db.session.delete(question)
@@ -381,49 +589,50 @@ def delete_question(question_id):
     return '', 204
 
 
-# UserAnswers CRUD Operations
-@app.route('/user_answers', methods=['POST'])
-def create_user_answer():
-    data = request.get_json()
-    new_user_answer = UserAnswers(
-        user_id=data['user_id'],
-        answer_id=data['answer_id']
-    )
-    db.session.add(new_user_answer)
-    db.session.commit()
-    return jsonify(to_dict(new_user_answer)), 201
+# # UserAnswers CRUD Operations
+# @app.route('/user_answers', methods=['POST'])
+# def create_user_answer():
+#     data = request.get_json()
+#     new_user_answer = UserAnswers(
+#         user_id=data['user_id'],
+#         answer_id=data['answer_id']
+#     )
+#     db.session.add(new_user_answer)
+#     db.session.commit()
+#     return jsonify(to_dict(new_user_answer)), 201
 
-@app.route('/user_answers', methods=['GET'])
-def get_user_answers():
-    user_answers = UserAnswers.query.all()
-    return jsonify([to_dict(ua) for ua in user_answers]), 200
+# @app.route('/user_answers', methods=['GET'])
+# def get_user_answers():
+#     user_answers = UserAnswers.query.all()
+#     return jsonify([to_dict(ua) for ua in user_answers]), 200
 
-@app.route('/user_answers/<uuid:user_answer_id>', methods=['GET'])
-def get_user_answer(user_answer_id):
-    user_answer = UserAnswers.query.get_or_404(user_answer_id)
-    return jsonify(to_dict(user_answer)), 200
+# @app.route('/user_answers/<uuid:user_answer_id>', methods=['GET'])
+# def get_user_answer(user_answer_id):
+#     user_answer = UserAnswers.query.get_or_404(user_answer_id)
+#     return jsonify(to_dict(user_answer)), 200
 
-@app.route('/user_answers/<uuid:user_answer_id>', methods=['PUT'])
-def update_user_answer(user_answer_id):
-    data = request.get_json()
-    user_answer = UserAnswers.query.get_or_404(user_answer_id)
-    if 'user_id' in data:
-        user_answer.user_id = data['user_id']
-    if 'answer_id' in data:
-        user_answer.answer_id = data['answer_id']
-    db.session.commit()
-    return jsonify(to_dict(user_answer)), 200
+# @app.route('/user_answers/<uuid:user_answer_id>', methods=['PUT'])
+# def update_user_answer(user_answer_id):
+#     data = request.get_json()
+#     user_answer = UserAnswers.query.get_or_404(user_answer_id)
+#     if 'user_id' in data:
+#         user_answer.user_id = data['user_id']
+#     if 'answer_id' in data:
+#         user_answer.answer_id = data['answer_id']
+#     db.session.commit()
+#     return jsonify(to_dict(user_answer)), 200
 
-@app.route('/user_answers/<uuid:user_answer_id>', methods=['DELETE'])
-def delete_user_answer(user_answer_id):
-    user_answer = UserAnswers.query.get_or_404(user_answer_id)
-    db.session.delete(user_answer)
-    db.session.commit()
-    return '', 204
+# @app.route('/user_answers/<uuid:user_answer_id>', methods=['DELETE'])
+# def delete_user_answer(user_answer_id):
+#     user_answer = UserAnswers.query.get_or_404(user_answer_id)
+#     db.session.delete(user_answer)
+#     db.session.commit()
+#     return '', 204
 
 
 # Choice CRUD Operations
 @app.route('/choices', methods=['POST'])
+
 def create_choice():
     data = request.get_json()
     new_choice = Choice(
@@ -437,16 +646,19 @@ def create_choice():
 
 
 @app.route('/choices', methods=['GET'])
+
 def get_choices():
     choices = Choice.query.all()
     return jsonify([to_dict(choice) for choice in choices]), 200
 
 @app.route('/choices/<uuid:choice_id>', methods=['GET'])
+
 def get_choice(choice_id):
     choice = Choice.query.get_or_404(choice_id)
     return jsonify(to_dict(choice)), 200
 
 @app.route('/choices/<uuid:choice_id>', methods=['PUT'])
+
 def update_choice(choice_id):
     data = request.get_json()
     choice = Choice.query.get_or_404(choice_id)
@@ -460,6 +672,7 @@ def update_choice(choice_id):
     return jsonify(to_dict(choice)), 200
 
 @app.route('/choices/<uuid:choice_id>', methods=['DELETE'])
+
 def delete_choice(choice_id):
     choice = Choice.query.get_or_404(choice_id)
     db.session.delete(choice)
@@ -467,11 +680,13 @@ def delete_choice(choice_id):
     return '', 204
 
 @app.route('/user_paragraphs', methods=['GET'])
+
 def get_user_paragraphs():
     user_paragraphs = UserParagraph.query.all()
     return jsonify([to_dict(up) for up in user_paragraphs]), 200
 
 @app.route('/user_paragraphs/<uuid:user_paragraph_id>', methods=['GET'])
+
 def get_user_paragraph(user_paragraph_id):
     user_paragraph = UserParagraph.query.get_or_404(user_paragraph_id)
     return jsonify(to_dict(user_paragraph)), 200
