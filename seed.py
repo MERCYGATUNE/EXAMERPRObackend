@@ -15,9 +15,11 @@ def generate_users(num_users):
     for _ in range(num_users):
         email = fake.email()
         password = bcrypt.hashpw(fake.password().encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        username = fake.username()
         user = User(
             email=email,
             password=password,
+            username=username,
             confirmed_email=random.choice([True, False]),
             role=random.choice(["user", "admin"]),
             referral_code=fake.uuid4(),

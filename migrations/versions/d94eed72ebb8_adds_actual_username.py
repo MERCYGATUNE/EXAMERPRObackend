@@ -1,8 +1,8 @@
-"""update
+"""adds actual username
 
-Revision ID: b0e46f721c56
-Revises: cc55c25ae632
-Create Date: 2024-08-01 21:26:15.965590
+Revision ID: d94eed72ebb8
+Revises: bb11841b5a1a
+Create Date: 2024-08-08 12:02:43.571975
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b0e46f721c56'
-down_revision = 'cc55c25ae632'
+revision = 'd94eed72ebb8'
+down_revision = 'bb11841b5a1a'
 branch_labels = None
 depends_on = None
 
@@ -27,9 +27,6 @@ def upgrade():
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
                existing_nullable=True)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
 
     with op.batch_alter_table('answers', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -39,10 +36,7 @@ def upgrade():
         batch_op.alter_column('question_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               nullable=False)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
+               existing_nullable=True)
 
     with op.batch_alter_table('choice', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -53,9 +47,6 @@ def upgrade():
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
                existing_nullable=True)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
 
     with op.batch_alter_table('comment', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -89,14 +80,11 @@ def upgrade():
         batch_op.alter_column('user_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               nullable=False)
+               existing_nullable=False)
         batch_op.alter_column('sender_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
                existing_nullable=True)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
 
     with op.batch_alter_table('paragraph', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -107,9 +95,6 @@ def upgrade():
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
                existing_nullable=True)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
 
     with op.batch_alter_table('password_reset', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -129,14 +114,11 @@ def upgrade():
         batch_op.alter_column('user_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               nullable=False)
+               existing_nullable=False)
         batch_op.alter_column('subscription_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
                existing_nullable=True)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
 
     with op.batch_alter_table('profile', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -146,10 +128,7 @@ def upgrade():
         batch_op.alter_column('user_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               nullable=False)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
+               existing_nullable=False)
 
     with op.batch_alter_table('questions', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -160,9 +139,6 @@ def upgrade():
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
                existing_nullable=True)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
 
     with op.batch_alter_table('referral', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -182,10 +158,7 @@ def upgrade():
         batch_op.alter_column('user_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               nullable=False)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
+               existing_nullable=False)
 
     with op.batch_alter_table('score', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -195,14 +168,11 @@ def upgrade():
         batch_op.alter_column('user_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               nullable=False)
+               existing_nullable=False)
         batch_op.alter_column('topic_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
                existing_nullable=True)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
 
     with op.batch_alter_table('subcategory', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -223,13 +193,10 @@ def upgrade():
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
                existing_nullable=False)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
         batch_op.alter_column('user_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               nullable=False)
+               existing_nullable=False)
 
     with op.batch_alter_table('topic', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -239,11 +206,11 @@ def upgrade():
         batch_op.alter_column('user_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               existing_nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('sub_category_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               existing_nullable=True)
+               existing_nullable=False)
 
     with op.batch_alter_table('useranswers', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -253,11 +220,11 @@ def upgrade():
         batch_op.alter_column('question_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               nullable=False)
+               existing_nullable=False)
         batch_op.alter_column('user_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               nullable=False)
+               existing_nullable=False)
 
     with op.batch_alter_table('userchoice', schema=None) as batch_op:
         batch_op.alter_column('id',
@@ -267,7 +234,7 @@ def upgrade():
         batch_op.alter_column('question_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               nullable=False)
+               existing_nullable=False)
         batch_op.alter_column('answer_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
@@ -281,21 +248,18 @@ def upgrade():
         batch_op.alter_column('question_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
-               nullable=False)
+               existing_nullable=False)
         batch_op.alter_column('answer_id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
                existing_nullable=True)
 
     with op.batch_alter_table('users', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('username', sa.String(), nullable=False))
         batch_op.alter_column('id',
                existing_type=sa.NUMERIC(),
                type_=sa.UUID(),
                existing_nullable=False)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=False)
-        batch_op.create_unique_constraint(None, ['email'])
 
     # ### end Alembic commands ###
 
@@ -303,14 +267,11 @@ def upgrade():
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
     with op.batch_alter_table('users', schema=None) as batch_op:
-        batch_op.drop_constraint(None, type_='unique')
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
         batch_op.alter_column('id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
                existing_nullable=False)
+        batch_op.drop_column('username')
 
     with op.batch_alter_table('userparagraph', schema=None) as batch_op:
         batch_op.alter_column('answer_id',
@@ -320,7 +281,7 @@ def downgrade():
         batch_op.alter_column('question_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -334,7 +295,7 @@ def downgrade():
         batch_op.alter_column('question_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -344,11 +305,11 @@ def downgrade():
         batch_op.alter_column('user_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('question_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -358,11 +319,11 @@ def downgrade():
         batch_op.alter_column('sub_category_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               existing_nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('user_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               existing_nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -372,10 +333,7 @@ def downgrade():
         batch_op.alter_column('user_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               nullable=True)
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -396,9 +354,6 @@ def downgrade():
                existing_nullable=False)
 
     with op.batch_alter_table('score', schema=None) as batch_op:
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
         batch_op.alter_column('topic_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -406,20 +361,17 @@ def downgrade():
         batch_op.alter_column('user_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
                existing_nullable=False)
 
     with op.batch_alter_table('resource', schema=None) as batch_op:
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
         batch_op.alter_column('user_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('topic_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -436,9 +388,6 @@ def downgrade():
                existing_nullable=False)
 
     with op.batch_alter_table('questions', schema=None) as batch_op:
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
         batch_op.alter_column('topic_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -449,22 +398,16 @@ def downgrade():
                existing_nullable=False)
 
     with op.batch_alter_table('profile', schema=None) as batch_op:
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
         batch_op.alter_column('user_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
                existing_nullable=False)
 
     with op.batch_alter_table('payment', schema=None) as batch_op:
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
         batch_op.alter_column('subscription_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -472,7 +415,7 @@ def downgrade():
         batch_op.alter_column('user_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -489,9 +432,6 @@ def downgrade():
                existing_nullable=False)
 
     with op.batch_alter_table('paragraph', schema=None) as batch_op:
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
         batch_op.alter_column('answer_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -502,9 +442,6 @@ def downgrade():
                existing_nullable=False)
 
     with op.batch_alter_table('notification', schema=None) as batch_op:
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
         batch_op.alter_column('sender_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -512,7 +449,7 @@ def downgrade():
         batch_op.alter_column('user_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               nullable=True)
+               existing_nullable=False)
         batch_op.alter_column('id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -543,9 +480,6 @@ def downgrade():
                existing_nullable=False)
 
     with op.batch_alter_table('choice', schema=None) as batch_op:
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
         batch_op.alter_column('answer_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
@@ -556,22 +490,16 @@ def downgrade():
                existing_nullable=False)
 
     with op.batch_alter_table('answers', schema=None) as batch_op:
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
         batch_op.alter_column('question_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
-               nullable=True)
+               existing_nullable=True)
         batch_op.alter_column('id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
                existing_nullable=False)
 
     with op.batch_alter_table('answermetadata', schema=None) as batch_op:
-        batch_op.alter_column('created_at',
-               existing_type=sa.DATETIME(),
-               nullable=True)
         batch_op.alter_column('answer_id',
                existing_type=sa.UUID(),
                type_=sa.NUMERIC(),
