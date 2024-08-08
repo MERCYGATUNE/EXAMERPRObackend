@@ -11,11 +11,38 @@ from dotenv import load_dotenv
 import os
 from uuid import UUID
 
+from student import profile_bp, user_bp, exam_category_bp, subcategory_bp, topic_bp, \
+    comment_bp, question_bp, answer_bp, subscription_bp, payment_bp, score_bp, resource_bp, \
+    referral_bp, answer_metadata_bp, choice_bp, user_paragraph_bp
+
+
+# Registering Blueprints
+app.register_blueprint(profile_bp, url_prefix='/profiles')
+app.register_blueprint(user_bp, url_prefix='/users')
+app.register_blueprint(exam_category_bp, url_prefix='/examcategories')
+app.register_blueprint(subcategory_bp, url_prefix='/subcategories')
+app.register_blueprint(topic_bp, url_prefix='/topics')
+app.register_blueprint(comment_bp, url_prefix='/comments')
+app.register_blueprint(question_bp, url_prefix='/questions')
+app.register_blueprint(answer_bp, url_prefix='/answers')
+app.register_blueprint(subscription_bp, url_prefix='/subscriptions')
+app.register_blueprint(payment_bp, url_prefix='/payments')
+app.register_blueprint(score_bp, url_prefix='/scores')
+app.register_blueprint(resource_bp, url_prefix='/resources')
+app.register_blueprint(referral_bp, url_prefix='/referrals')
+app.register_blueprint(answer_metadata_bp, url_prefix='/answer_metadata')
+app.register_blueprint(choice_bp, url_prefix='/choices')
+app.register_blueprint(user_paragraph_bp, url_prefix='/user_paragraphs')
+
+
+
 from flask_mail import Mail, Message
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
 load_dotenv()
+
+SQLALCHEMY_DATABASE_URI = 'sqlite:///instance/app.db'
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SECURITY_PASSWORD_SALT'] = os.getenv('SECURITY_PASSWORD_SALT')
@@ -50,6 +77,10 @@ stripe.api_key = os.getenv('STRIPE_API_KEY')
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+
+def index():
+    print("BACKEND")
 
 @app.route('/register', methods=['POST'])
 def register():
