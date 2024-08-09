@@ -50,13 +50,6 @@ def to_dict(self):
         }
  
  
-    
-    
-    
-    
-    
-    
-
 class Profile(db.Model):
     __tablename__ = 'profile'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -352,7 +345,6 @@ def to_dict(self):
             'answer_id': str(self.answer_id) if self.answer_id else None
         }    
     
-
 class Topic(db.Model):
     __tablename__ = 'topic'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -370,7 +362,6 @@ def to_dict(self):
             'sub_category_id': str(self.sub_category_id)
         }    
     
-
 class SubCategory(db.Model):
     __tablename__ = 'subcategory'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -379,8 +370,14 @@ class SubCategory(db.Model):
     user_id = Column(UUID(as_uuid=True))
     exam_category_id = Column(UUID(as_uuid=True))
     
-    
-    
+def to_dict(self):
+        return {
+            'id': str(self.id),
+            'name': self.name,
+            'description': self.description,
+            'user_id': str(self.user_id) if self.user_id else None,
+            'exam_category_id': str(self.exam_category_id) if self.exam_category_id else None
+        }    
 
 class ExamCategory(db.Model):
     __tablename__ = 'examcategory'
@@ -388,6 +385,14 @@ class ExamCategory(db.Model):
     name = Column(String)
     description = Column(Text)
     user_id = Column(UUID(as_uuid=True))
+    
+def to_dict(self):
+        return {
+            'id': str(self.id),
+            'name': self.name,
+            'description': self.description,
+            'user_id': str(self.user_id) if self.user_id else None
+        }    
 
 class Choice(db.Model):
     __tablename__ = 'choice'
@@ -396,6 +401,15 @@ class Choice(db.Model):
     answer_id = Column(UUID(as_uuid=True))
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime)
+    
+def to_dict(self):
+        return {
+            'id': str(self.id),
+            'choice': self.choice,
+            'answer_id': str(self.answer_id) if self.answer_id else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }    
 
 class Paragraph(db.Model):
     __tablename__ = 'paragraph'
@@ -404,6 +418,16 @@ class Paragraph(db.Model):
     answer_id = Column(UUID(as_uuid=True))
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime)
+    
+def to_dict(self):
+        return {
+            'id': str(self.id),
+            'paragraph': self.paragraph,
+            'answer_id': str(self.answer_id) if self.answer_id else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }    
+    
 
 class Comment(db.Model):
     __tablename__ = 'comment'
@@ -416,6 +440,20 @@ class Comment(db.Model):
 
     question = relationship("Questions", back_populates="comments")
     user = relationship("User", back_populates="comments")
+    
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'question_id': str(self.question_id),
+            'user_id': str(self.user_id),
+            'description': self.description,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'question': self.question.to_dict() if self.question else None,
+            'user': self.user.to_dict() if self.user else None
+        }    
+    
 
 class PasswordReset(db.Model):
     __tablename__ = 'password_reset'
@@ -427,3 +465,14 @@ class PasswordReset(db.Model):
     updated_at = Column(DateTime)
     
     user = relationship("User", back_populates="password_resets")
+    
+def to_dict(self):
+        return {
+            'id': str(self.id),
+            'request_triggered': self.request_triggered,
+            'request_satisfied': self.request_satisfied,
+            'user_id': str(self.user_id),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'user': self.user.to_dict() if self.user else None
+        }    
