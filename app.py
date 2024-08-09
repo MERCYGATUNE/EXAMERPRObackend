@@ -10,10 +10,19 @@ import logging
 from dotenv import load_dotenv
 import os
 from uuid import UUID
+import json
 
 from flask_mail import Mail, Message
 
 app = Flask(__name__)
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, UUID):
+            return str(obj)
+        return super().default(obj)
+
+app.json_encoder = CustomJSONEncoder
 app.config.from_object('config.Config')
 load_dotenv()
 
@@ -132,7 +141,7 @@ def create_subscription():
     try:
         amount_cents = int(float(amount) * 100)
 
-    
+
 
         payment_intent = stripe.PaymentIntent.create(
             amount=amount_cents, 
@@ -182,6 +191,17 @@ def create_subscription():
         return jsonify({'success': False, 'error': 'Payment failed. Please try again.'}), 400
     except Exception as e:
         return jsonify({'success': False, 'error': 'An error occurred. Please try again later.'}), 500
+    
+@app.route('/all_users', methods=['GET'])
+def get_all_users():
+    users = User.query.all()
+    return jsonify([{
+        'id': str(user.id),
+        'email': user.email,
+        'username': user.username,
+        'role': user.role,
+        'created_at': user.created_at.isoformat(),
+    } for user in users])
 
 @app.route('/update-subscription', methods=['POST'])
 def update_subscription():
