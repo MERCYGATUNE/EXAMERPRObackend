@@ -8,7 +8,7 @@ import uuid
 from sqlalchemy import Column, DateTime, func
 from flask import Blueprint, request,jsonify
 from flask_restful import Api
-from models import User,Profile,Topic,SubCategory,Paragraph,
+from models import User,Profile,Topic,SubCategory,Paragraph,Comment,ExamCategory,Choice,Resource,Referral,PasswordReset,Payment,Questions,Answers,UserAnswers,AnswerMetadata
 
 
 db = SQLAlchemy()
