@@ -674,6 +674,33 @@ def delete_account():
     else:
         return jsonify({"message": "User not found"}), 404
 
+@app.route('/update_user', methods=['POST'])
+def update_user():
+    data = request.get_json()
+    user_id = data.get('id')
+    username = data.get('username')
+    email = data.get('email')
+    role = data.get('role')
+    new_password = data.get('password')
+
+    userUUID = uuid.UUID(user_id) 
+
+    user = User.query.get(userUUID)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    if username:
+        user.username = username
+    if email:
+        user.email = email
+    if role:
+        user.role = role
+    if new_password:
+        new_hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+        user.password = new_hashed_password.decode('utf-8')
+
+    db.session.commit()
+    return jsonify({'message': 'User updated successfully'}), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5555)
