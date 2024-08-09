@@ -10,13 +10,30 @@ import logging
 from dotenv import load_dotenv
 import os
 from uuid import UUID
+from flask_mail import Mail, Message
+from config import Config
 
-from student import profile_bp, user_bp, exam_category_bp, subcategory_bp, topic_bp, \
+from resources.student import profile_bp, user_bp, exam_category_bp, subcategory_bp, topic_bp, \
     comment_bp, question_bp, answer_bp, subscription_bp, payment_bp, score_bp, resource_bp, \
     referral_bp, answer_metadata_bp, choice_bp, user_paragraph_bp
 
 
+
+from resources.admin import profile_bp, user_bp, exam_category_bp, subcategory_bp, topic_bp, \
+    comment_bp, question_bp, answer_bp, subscription_bp, payment_bp, score_bp, resource_bp, \
+    referral_bp, answer_metadata_bp, choice_bp, user_paragraph_bp
+
+
+
+
+from resources.examiner import profile_bp, user_bp, exam_category_bp, subcategory_bp, topic_bp, \
+    comment_bp, question_bp, answer_bp, subscription_bp, payment_bp, score_bp, resource_bp, \
+    referral_bp, answer_metadata_bp, choice_bp, user_paragraph_bp
+
+
+
 # Registering Blueprints
+
 app.register_blueprint(profile_bp, url_prefix='/profiles')
 app.register_blueprint(user_bp, url_prefix='/users')
 app.register_blueprint(exam_category_bp, url_prefix='/examcategories')
@@ -36,9 +53,10 @@ app.register_blueprint(user_paragraph_bp, url_prefix='/user_paragraphs')
 
 
 
-from flask_mail import Mail, Message
+
 
 app = Flask(__name__)
+
 app.config.from_object('config.Config')
 load_dotenv()
 
@@ -78,9 +96,10 @@ stripe.api_key = os.getenv('STRIPE_API_KEY')
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-
+@app.route('/')
 def index():
-    print("BACKEND")
+    text='EXAMINER PRO'
+    return text
 
 @app.route('/register', methods=['POST'])
 def register():

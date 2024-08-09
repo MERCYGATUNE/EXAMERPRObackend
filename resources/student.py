@@ -7,14 +7,12 @@ from sqlalchemy.orm import relationship
 import uuid
 from sqlalchemy import Column, DateTime, func
 from flask import Blueprint, request,jsonify
+from flask_restful import Api
+from models import User,Profile,Topic,SubCategory,Paragraph,
 
 
 db = SQLAlchemy()
 migrate = Migrate()
-
-
-
-
 
 
 
@@ -531,7 +529,7 @@ def get_topic(topic_id):
     else:
         return jsonify({"error": "Topic not found"}), 404
     
-  @app.route('/comments', methods=['POST'])
+@app.route('/comments', methods=['POST'])
 def create_comment():
     data = request.get_json()
     new_comment = Comment(
@@ -565,7 +563,7 @@ def delete_comment(comment_id):
     else:
         return jsonify({"error": "Comment not found"}), 404
   
- Routes for Questions
+#  Routes for Questions
 @app.route('/questions', methods=['GET'])
 def get_questions():
     questions = Questions.query.all()
@@ -630,7 +628,7 @@ def get_subscription(subscription_id):
 @app.route('/payments', methods=['POST'])
 def create_payment():
     data = request.get_json()
-    new_payment = Payment(
+    new_payment = payment(
         user_id=data['user_id'],
         subscription_id=data.get('subscription_id'),
         amount=data['amount'],
@@ -1041,6 +1039,7 @@ def delete_answer_metadata(answer_metadata_id):
 
 
 # Define Blueprints
+
 profile_bp = Blueprint('profile', __name__ ,url_prefix='/profiles' )
 user_bp = Blueprint('user', __name__ ,url_prefix='/users')
 exam_category_bp = Blueprint('exam_category', __name__ ,url_prefix='/examcategories')
@@ -1058,7 +1057,7 @@ answer_metadata_bp = Blueprint('answer_metadata', __name__, url_prefix='/answerm
 choice_bp = Blueprint('choice', __name__ ,url_prefix='/choices')
 user_paragraph_bp = Blueprint('user_paragraph', __name__ ,url_prefix='/userparagraphs')
 
-
+profile_api=Api(profile_bp)
 
 
 

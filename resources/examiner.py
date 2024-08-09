@@ -1,6 +1,14 @@
-from sqlalchemy import Column, Text, UUID, DateTime
-import uuid
 from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from sqlalchemy import Column, ForeignKey, Integer, String, Float, Text, Boolean, DateTime
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+import uuid
+from sqlalchemy import Column, DateTime, func
+from flask import Blueprint, request,jsonify
+from flask_restful import Api
+
 
 
 db = SQLAlchemy()
@@ -728,6 +736,27 @@ def update_answer_metadata(answer_metadata_id):
         answer_metadata.metadata = data['metadata']
     db.session.commit()
     return jsonify(to_dict(answer_metadata)), 200
+
+
+# Define Blueprints
+
+profile_bp = Blueprint('profile', __name__ ,url_prefix='/profiles' )
+user_bp = Blueprint('user', __name__ ,url_prefix='/users')
+exam_category_bp = Blueprint('exam_category', __name__ ,url_prefix='/examcategories')
+subcategory_bp = Blueprint('subcategory', __name__ url_prefix='/subcategories')
+topic_bp = Blueprint('topic', __name__ ,url_prefix='/topics')
+comment_bp = Blueprint('comment', __name__ ,url_prefix='/comments')
+question_bp = Blueprint('question', __name__ ,url_prefix='/questions')
+answer_bp = Blueprint('answer', __name__ ,url_prefix='/answers')
+subscription_bp = Blueprint('subscription', __name__, url_prefix='/subscriptions')
+payment_bp = Blueprint('payment', __name__ ,url_prefix='/payments')
+score_bp = Blueprint('score', __name__ ,url_prefix='/scores')
+resource_bp = Blueprint('resource', __name__ ,url_prefix='/resources')
+referral_bp = Blueprint('referral', __name__ ,url_prefix='/referrals')
+answer_metadata_bp = Blueprint('answer_metadata', __name__, url_prefix='/answermetadata')
+choice_bp = Blueprint('choice', __name__ ,url_prefix='/choices')
+user_paragraph_bp = Blueprint('user_paragraph', __name__ ,url_prefix='/userparagraphs')
+
 
 
 
