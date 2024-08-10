@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, url_for
 from itsdangerous import URLSafeTimedSerializer
 from flask_cors import CORS
-from models import db, migrate, User, Subscription,Questions,Answers,ExamCategory,SubCategory,Topic
+from models import db,  User, Subscription,Questions,Answers,ExamCategory,SubCategory,Topic,Profile
 import uuid
 from datetime import datetime, timedelta
 import bcrypt
@@ -12,14 +12,19 @@ import os
 from uuid import UUID
 from flask_mail import Mail, Message
 from config import Config
+from flask_restful import Api,Resource
 
+from flask_migrate import Migrate
 from resources.student import student_bp
    
-
 from resources.admin import admin_bp
-    
 
 from resources.examiner import examiner_bp
+
+
+
+
+app = Flask(__name__)
 
 
 # Registering Blueprints
@@ -29,10 +34,6 @@ app.register_blueprint(examiner_bp)
 app.register_blueprint(admin_bp)
 
 
-
-
-
-app = Flask(__name__)
 
 app.config.from_object('config.Config')
 load_dotenv()
@@ -259,7 +260,10 @@ def cancel_subscription():
         return jsonify({'success': False, 'error': f'Rate limit exceeded'}, 429)
     except stripe.error.AuthenticationError as e:
         return jsonify({'success': False, 'error': 'Authentication error'}, 401)
+
 @app.route('/create_question', methods=['POST'])
+
+
 def create_question():
     data = request.get_json()
 
@@ -344,6 +348,7 @@ def get_questions():
 
 #     return jsonify({"message": "Question deleted successfully"}), 200
 @app.route('/examcategories', methods=['GET'])
+
 def get_exam_categories():
     exam_categories = ExamCategory.query.all()
     return jsonify([{
@@ -1795,14 +1800,6 @@ def update_answer_metadata(answer_metadata_id):
         answer_metadata.metadata = data['metadata']
     db.session.commit()
     return jsonify(to_dict(answer_metadata)), 200
-
-
-
-
-    
-    
-    
-    
 
 
 if __name__ == '__main__':

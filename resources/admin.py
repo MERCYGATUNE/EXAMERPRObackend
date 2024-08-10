@@ -8,7 +8,7 @@ import uuid
 from sqlalchemy import Column, DateTime, func
 from flask import Blueprint, request,jsonify
 from flask_restful import Api,Resource
-from models import Profile,User, ExamCategory,Comment,SubCategory,Questions,UserAnswers,UserChoice,UserParagraph,Choice,Topic,Notification,AnswerMetadata,Score,Resource, Answers,Referral,
+from models import Profile,User, ExamCategory,Comment,SubCategory,Questions,UserAnswers,UserChoice,UserParagraph,Choice,Topic,Notification,AnswerMetadata,Score,Resource, Answers,Referral
 
 
 db = SQLAlchemy()
@@ -18,16 +18,37 @@ admin_bp=Blueprint('admin_bp',__name__,url_prefix='/admin')
 admin_api=Api(admin_bp)
 
 #  User
+
 class UserList(Resource):
     def get(self):
         users = User.query.all()
-        return [user.to_dict() for user in users]
+        return [user.to_dict() for user in users], 200
+
+    def post(self):
+        data = request.get_json()
+
+        # Ensure necessary fields are provided (you can add more validation if needed)
+        if not data.get('email') or not data.get('password'):
+            return {"error": "Email and password are required"}, 400
+
+        new_user = User(
+            email=data.get('email'),
+            password=data.get('password'),  # Make sure to hash the password before saving in a real-world scenario
+            confirmed_email=data.get('confirmed_email', False),
+            role=data.get('role', 'user'),
+            referral_code=data.get('referral_code'),
+            created_at=data.get('created_at', datetime.utcnow())  # Use the current timestamp if not provided
+        )
+        
+        db.session.add(new_user)
+        db.session.commit()
+        return new_user.to_dict(), 201
 
 class UserResource(Resource):
     def get(self, user_id):
         user = User.query.get(user_id)
         if user:
-            return user.to_dict()
+            return user.to_dict(), 200
         return {"error": "User not found"}, 404
 
     def put(self, user_id):
@@ -40,7 +61,7 @@ class UserResource(Resource):
             user.role = data.get('role', user.role)
             user.referral_code = data.get('referral_code', user.referral_code)
             db.session.commit()
-            return user.to_dict()
+            return user.to_dict(), 200
         return {"error": "User not found"}, 404
 
     def delete(self, user_id):
@@ -48,11 +69,15 @@ class UserResource(Resource):
         if user:
             db.session.delete(user)
             db.session.commit()
-            return {"message": "User deleted"}
+            return {"message": "User deleted"}, 200
         return {"error": "User not found"}, 404
 
+# Register the resources with the admin API
 admin_api.add_resource(UserList, '/users')
 admin_api.add_resource(UserResource, '/users/<uuid:user_id>')
+    
+    
+    
     
 
 #  Profile
@@ -99,7 +124,7 @@ class ExamCategoryResource(Resource):
                 'name': ec.name,
                 'description': ec.description,
                 'user_id': str(ec.user_id)
-            } for ec in exam_categories]
+            } for ec in exam_categories],200
 
     def post(self):
         data = request.get_json()
