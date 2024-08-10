@@ -15,7 +15,7 @@ def generate_users(num_users):
     for _ in range(num_users):
         email = fake.email()
         password = bcrypt.hashpw(fake.password().encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        username = fake.username()
+        username = fake.user_name()
         user = User(
             email=email,
             password=password,

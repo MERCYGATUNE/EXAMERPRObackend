@@ -251,3 +251,19 @@ class PasswordReset(db.Model):
     updated_at = Column(DateTime)
     
     user = relationship("User", back_populates="password_resets")
+class Question(db.Model):
+    _tablename_ = 'questions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    question_text = db.Column(db.String(255), nullable=False)
+    choice = db.Column(db.Boolean, nullable=False)
+    exam_id = db.Column(db.Integer, db.ForeignKey('exams.id'), nullable=False)
+class Exam(db.Model):
+    _tablename_ = 'exams'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('exam_categories.id'), nullable=False)
+    sub_category_id = db.Column(db.Integer, db.ForeignKey('sub_categories.id'), nullable=False)
+    examiner = db.Column(db.String(255), nullable=False)
+    

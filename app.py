@@ -5,9 +5,8 @@ from models import db, migrate, User, Subscription,Questions,Answers,ExamCategor
 import uuid
 from datetime import datetime, timedelta
 import bcrypt
-import stripe
+import stripe 
 import logging
-from dotenv import load_dotenv
 import os
 from uuid import UUID
 
@@ -145,11 +144,10 @@ def create_subscription():
             }
         )
 
-        # Create a new subscription
         new_subscription = Subscription(
             id=uuid.uuid4(),
             user_id=user_uuid,
-            type='premium',  # Adjust based on your subscription types
+            type='premium',  
             amount=amount_cents,
             created_at=datetime.utcnow(),
             expires_at=datetime.utcnow() + timedelta(days=30)
@@ -535,7 +533,6 @@ def get_topic(topic_id):
 def create_topic():
     data = request.get_json()
     
-    # Validate incoming data
     required_fields = ['name', 'description', 'user_id', 'sub_category_id']
     for field in required_fields:
         if field not in data:
@@ -624,7 +621,6 @@ def change_username():
     else:
         return jsonify({"message": "User not found"}), 404
 
-
 @app.route('/change_email', methods=['POST'])
 def change_email():
     data = request.get_json()
@@ -653,6 +649,57 @@ def delete_account():
         return jsonify({"message": "Account has been deleted."}), 200
     else:
         return jsonify({"message": "User not found"}), 404
+    
+
+
+@app.route('/comments/<uuid:comment_id>', methods=['GET'])
+def get_comment(comment_id):
+    comment = comment.query.get(comment_id)
+    if comment:
+        return jsonify({
+            'id': str(comment.id),
+            'question_id': str(comment.question_id),
+            'user_id': str(comment.user_id),
+            'description': comment.description,
+            'created_at': comment.created_at.isoformat(),
+            'updated_at': comment.updated_at.isoformat() if comment.updated_at else None
+        })
+    return jsonify({'message': 'Comment not found'}), 404
+
+@app.route('/comments', methods=['POST'])
+def create_comment():
+    data = request.get_json()
+    new_comment = Comment(
+        question_id=data['question_id'],
+        user_id=data['user_id'],
+        description=data['description']
+    )
+    db.session.add(new_comment)
+    db.session.commit()
+    return jsonify({'message': 'Comment created', 'id': str(new_comment.id)}), 201
+
+@app.route('/comments/<uuid:comment_id>', methods=['PUT'])
+def update_comment(comment_id):
+    data = request.get_json()
+    comment = comment.query.get(comment_id)
+    if comment:
+        comment.description = data.get('description', comment.description)
+        comment.updated_at = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'message': 'Comment updated'})
+    return jsonify({'message': 'Comment not found'}), 404
+
+@app.route('/comments/<uuid:comment_id>', methods=['DELETE'])
+def delete_comment(comment_id):
+    comment = comment.query.get(comment_id)
+    if comment:
+        db.session.delete(comment)
+        db.session.commit()
+        return jsonify({'message': 'Comment deleted'})
+    return jsonify({'message': 'Comment not found'}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 
 if __name__ == '__main__':
