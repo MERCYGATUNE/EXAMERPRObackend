@@ -704,3 +704,7 @@ if __name__ == '__main__':
 
 if __name__ == '__main__':
     app.run(debug=True, port=5555)
+
+    # working route,topics,questions,subcategories,examcategories
+     
+
