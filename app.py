@@ -362,10 +362,10 @@ def create_exam_category():
     try:
         db.session.commit()
         return jsonify({
-            'id': str(new_exam_category.id),  # Convert UUID to string for JSON response
+            'id': str(new_exam_category.id),  
             'name': new_exam_category.name,
             'description': new_exam_category.description,
-            'user_id': str(new_exam_category.user_id)  # Convert UUID to string for JSON response
+            'user_id': str(new_exam_category.user_id)  
         }), 201
     except Exception as e:
         db.session.rollback()
