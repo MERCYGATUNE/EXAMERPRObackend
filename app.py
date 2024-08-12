@@ -382,10 +382,10 @@ def create_exam_category():
     try:
         db.session.commit()
         return jsonify({
-            'id': str(new_exam_category.id),  # Convert UUID to string for JSON response
+            'id': str(new_exam_category.id),  
             'name': new_exam_category.name,
             'description': new_exam_category.description,
-            'user_id': str(new_exam_category.user_id)  # Convert UUID to string for JSON response
+            'user_id': str(new_exam_category.user_id)  
         }), 201
     except Exception as e:
         db.session.rollback()
@@ -733,7 +733,45 @@ def submit_exam():
     db.session.commit()
     return jsonify({'grade': grade})
 
+@app.route('/add_exams', methods=['POST'])
+def add_exam():
+    try:
+        data = request.json
 
+        # Create the exam object
+        exam = Exams(
+            exam_name=data['exam_name'],
+            category=data['category'],
+            subcategory=data['subcategory'],
+            createdBy=data['createdBy'],
+            createdOn=data['createdOn'],
+            exam_duration=data.get('exam_duration', 60),  # Default to 60 if not provided
+            examiner_id=str(uuid.uuid4())  # Replace with actual examiner ID if available
+        )
+        
+        db.session.add(exam)
+        db.session.flush()  # Flush to get the exam ID for the questions
+
+        # Add the associated questions
+        for question_data in data['questions']:
+            question = Question(
+                question_text=question_data['question_text'],
+                choice1=question_data.get('choice1', ''),
+                choice2=question_data.get('choice2', ''),
+                choice3=question_data.get('choice3', ''),
+                choice4=question_data.get('choice4', ''),
+                isChoice=question_data['isChoice'],
+                answer=question_data['answer'],
+                exam_id=exam.id
+            )
+            db.session.add(question)
+
+        db.session.commit()
+        return jsonify({'message': 'Exam added successfully'}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Failed to add exam', 'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5555)
