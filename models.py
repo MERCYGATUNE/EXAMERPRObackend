@@ -21,37 +21,8 @@ class User(db.Model):
     referral_code = Column(String)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    profile = relationship("Profile", back_populates="user", uselist=False)
-    notifications = relationship("Notification", back_populates="user")
     subscriptions = relationship("Subscription", back_populates="user", cascade='all, delete')
-    payments = relationship("Payment", back_populates="user")
-    scores = relationship("Score", back_populates="user")
-    resources = relationship("Resource", back_populates="user")
     exams = relationship("Exams", backref="user")
-
-class Profile(db.Model):
-    __tablename__ = 'profile'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    first_name = Column(String)
-    last_name = Column(String)
-    photo_url = Column(String)
-    title = Column(String)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-
-    user = relationship("User", back_populates="profile")
-
-class Notification(db.Model):
-    __tablename__ = 'notification'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    subject = Column(String)
-    body = Column(Text)
-    sender_id = Column(UUID(as_uuid=True))
-    sender_name = Column(String)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    
-    user = relationship("User", back_populates="notifications")
 
 class Subscription(db.Model):
     __tablename__ = 'subscription'
@@ -63,58 +34,6 @@ class Subscription(db.Model):
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
     
     user = relationship("User", back_populates="subscriptions")
-
-class Payment(db.Model):
-    __tablename__ = 'payment'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    subscription_id = Column(UUID(as_uuid=True))
-    amount = Column(Float)
-    expires_at = Column(DateTime)
-    payment_type = Column(String)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    
-    user = relationship("User", back_populates="payments")
-
-class Score(db.Model):
-    __tablename__ = 'score'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    topic_id = Column(UUID(as_uuid=True))
-    possible_score = Column(Float)
-    user_score = Column(Float)
-    completion_rate = Column(Float)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    
-    user = relationship("User", back_populates="scores")
-
-class Resource(db.Model):
-    __tablename__ = 'resource'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    topic_id = Column(UUID(as_uuid=True))
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    resource_type = Column(String)
-    short_desc = Column(String)
-    details = Column(Text)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    
-    user = relationship("User", back_populates="resources")
-
-class Referral(db.Model):
-    __tablename__ = 'referral'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    referral_code = Column(String)
-    points_earned = Column(Integer)
-    redeemed = Column(Boolean)
-
-# class AnswerMetadata(db.Model):
-#     __tablename__ = 'answermetadata'
-#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-#     description = Column(Text)
-#     supporting_image = Column(String)
-#     answer_id = Column(UUID(as_uuid=True))
-#     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-#     updated_at = Column(DateTime)
 
 class Topic(db.Model):
     __tablename__ = 'topics'
@@ -131,35 +50,6 @@ class Topic(db.Model):
     
     questions = relationship('Question', backref='topic')
 
-
-# class Answers(db.Model):
-#     __tablename__ = 'answers'
-#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-#     question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'))
-#     answer_type = Column(String)
-#     answer = Column(Text)
-#     created_at = Column(DateTime, default=func.now(), nullable=False)
-
-#     question = relationship("Questions", back_populates="answers")
-
-#     def to_dict(self):
-#         return {
-#             'id': str(self.id),
-#             'question_id': str(self.question_id),
-#             'answer_type': self.answer_type,
-#             'answer': self.answer,
-#             'created_at': self.created_at.isoformat()
-#         }
-
-
-class UserChoice(db.Model):
-    __tablename__ = 'userchoice'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'), nullable=False)
-    choice = Column(Text)
-    answer_id = Column(UUID(as_uuid=True))
-
-
 class SubCategory(db.Model):
     __tablename__ = 'subcategory'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -173,26 +63,8 @@ class ExamCategory(db.Model):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(Text)
-    # user_id = Column(UUID(as_uuid=True))
 
     subcategories = relationship('SubCategory', backref='examcategory')
-
-class Choice(db.Model):
-    __tablename__ = 'choice'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    choice = Column(Text)
-    answer_id = Column(UUID(as_uuid=True))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime)
-
-class Paragraph(db.Model):
-    __tablename__ = 'paragraph'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    paragraph = Column(Text)
-    answer_id = Column(UUID(as_uuid=True))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime)
-
 
 class Exams(db.Model):
     __tablename__ = 'exams'
@@ -202,6 +74,7 @@ class Exams(db.Model):
     subcategory = Column(String, nullable=False)
     createdBy = Column(String, nullable=False)
     createdOn = Column(String, nullable=False)
+    exam_duration = Column(Integer)
     examiner_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), default=uuid.uuid4)
 
     questions = relationship('Question', backref='exams')
