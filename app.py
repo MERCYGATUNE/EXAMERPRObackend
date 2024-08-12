@@ -738,15 +738,22 @@ def add_exam():
     try:
         data = request.json
 
+        # Validate the required fields
+        if not data.get('exam_name') or not data.get('category') or not data.get('subcategory') or not data.get('createdBy'):
+            return jsonify({'message': 'Missing required fields'}), 401
+        
+        examinerr_id = data['examiner_id']
+        examiner_uuid = uuid.UUID(examinerr_id)
+
         # Create the exam object
         exam = Exams(
             exam_name=data['exam_name'],
             category=data['category'],
             subcategory=data['subcategory'],
             createdBy=data['createdBy'],
-            createdOn=data['createdOn'],
+            createdOn=datetime.strptime(data['createdOn'], "%Y-%m-%dT%H:%M:%S.%fZ"),
             exam_duration=data.get('exam_duration', 60),  # Default to 60 if not provided
-            examiner_id=str(uuid.uuid4())  # Replace with actual examiner ID if available
+            examiner_id=examiner_uuid
         )
         
         db.session.add(exam)
@@ -771,6 +778,7 @@ def add_exam():
 
     except Exception as e:
         db.session.rollback()
+        print(e)
         return jsonify({'message': 'Failed to add exam', 'error': str(e)}), 500
 
 if __name__ == '__main__':
