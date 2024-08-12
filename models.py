@@ -27,9 +27,7 @@ class User(db.Model):
     payments = relationship("Payment", back_populates="user")
     scores = relationship("Score", back_populates="user")
     resources = relationship("Resource", back_populates="user")
-    comments = relationship("Comment", back_populates="user")
-    user_answers = relationship("UserAnswers", back_populates="user")
-    password_resets = relationship("PasswordReset", back_populates="user")
+    exams = relationship("Exams", backref="user")
 
 class Profile(db.Model):
     __tablename__ = 'profile'
@@ -109,79 +107,50 @@ class Referral(db.Model):
     points_earned = Column(Integer)
     redeemed = Column(Boolean)
 
-class AnswerMetadata(db.Model):
-    __tablename__ = 'answermetadata'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    description = Column(Text)
-    supporting_image = Column(String)
-    answer_id = Column(UUID(as_uuid=True))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime)
+# class AnswerMetadata(db.Model):
+#     __tablename__ = 'answermetadata'
+#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+#     description = Column(Text)
+#     supporting_image = Column(String)
+#     answer_id = Column(UUID(as_uuid=True))
+#     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+#     updated_at = Column(DateTime)
 
-class Questions(db.Model):
-    __tablename__ = 'questions'
+class Topic(db.Model):
+    __tablename__ = 'topics'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question = Column(Text)
-    topic_id = Column(UUID(as_uuid=True))
-    mode = Column(String)
-    exam_mode = Column(String)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-
-    answers = relationship("Answers", back_populates="question")
-    comments = relationship("Comment", back_populates="question")
-    user_answers = relationship("UserAnswers", back_populates="question")
+    name = Column(String)
+    sub_category_id = Column(UUID(as_uuid=True), ForeignKey('subcategory.id'),nullable=False)
 
     def to_dict(self):
         return {
             'id': str(self.id),
-            'question': self.question,
-            'topic_id': str(self.topic_id) if self.topic_id else None,
-            'mode': self.mode,
-            'exam_mode': self.exam_mode,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            
+            'name': self.name,
+            'sub_category': str(self.sub_category)
         }
-
-
-
-class Answers(db.Model):
-    __tablename__ = 'answers'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'))
-    answer_type = Column(String)
-    answer = Column(Text)
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-
-    question = relationship("Questions", back_populates="answers")
-
-    def to_dict(self):
-        return {
-            'id': str(self.id),
-            'question_id': str(self.question_id),
-            'answer_type': self.answer_type,
-            'answer': self.answer,
-            'created_at': self.created_at.isoformat()
-        }
-
-
-class UserAnswers(db.Model):
-    __tablename__ = 'useranswers'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'), nullable=False)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    answer_type = Column(String)
-    answer = Column(Text)
-    attempts = Column(Integer)
     
-    question = relationship("Questions", back_populates="user_answers")
-    user = relationship("User", back_populates="user_answers")
+    questions = relationship('Question', backref='topic')
 
-class UserParagraph(db.Model):
-    __tablename__ = 'userparagraph'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'), nullable=False)
-    paragraph = Column(Text)
-    answer_id = Column(UUID(as_uuid=True))
+
+# class Answers(db.Model):
+#     __tablename__ = 'answers'
+#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+#     question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'))
+#     answer_type = Column(String)
+#     answer = Column(Text)
+#     created_at = Column(DateTime, default=func.now(), nullable=False)
+
+#     question = relationship("Questions", back_populates="answers")
+
+#     def to_dict(self):
+#         return {
+#             'id': str(self.id),
+#             'question_id': str(self.question_id),
+#             'answer_type': self.answer_type,
+#             'answer': self.answer,
+#             'created_at': self.created_at.isoformat()
+#         }
+
 
 class UserChoice(db.Model):
     __tablename__ = 'userchoice'
@@ -190,28 +159,23 @@ class UserChoice(db.Model):
     choice = Column(Text)
     answer_id = Column(UUID(as_uuid=True))
 
-class Topic(db.Model):
-    __tablename__ = 'topic'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String)
-    description = Column(Text)
-    user_id = Column(UUID(as_uuid=True), nullable=False)
-    sub_category_id = Column(UUID(as_uuid=True), nullable=False)
 
 class SubCategory(db.Model):
     __tablename__ = 'subcategory'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String)
-    description = Column(Text)
-    user_id = Column(UUID(as_uuid=True))
-    exam_category_id = Column(UUID(as_uuid=True))
+    exam_category_id = Column(UUID(as_uuid=True), ForeignKey('examcategory.id'), nullable=False)
+
+    topics = relationship('Topic', backref='subcategory')
 
 class ExamCategory(db.Model):
     __tablename__ = 'examcategory'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(Text)
-    user_id = Column(UUID(as_uuid=True))
+    # user_id = Column(UUID(as_uuid=True))
+
+    subcategories = relationship('SubCategory', backref='examcategory')
 
 class Choice(db.Model):
     __tablename__ = 'choice'
@@ -229,25 +193,36 @@ class Paragraph(db.Model):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime)
 
-class Comment(db.Model):
-    __tablename__ = 'comment'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey('questions.id'), nullable=False)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    description = Column(Text, nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime)
 
-    question = relationship("Questions", back_populates="comments")
-    user = relationship("User", back_populates="comments")
-
-class PasswordReset(db.Model):
-    __tablename__ = 'password_reset'
+class Exams(db.Model):
+    __tablename__ = 'exams'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    request_triggered = Column(Boolean, nullable=False, default=False)
-    request_satisfied = Column(Boolean, nullable=False, default=False)
+    exam_name = Column(String, nullable=False)
+    category = Column(String, nullable=False)
+    subcategory = Column(String, nullable=False)
+    createdBy = Column(String, nullable=False)
+    createdOn = Column(String, nullable=False)
+    examiner_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), default=uuid.uuid4)
+
+    questions = relationship('Question', backref='exams')
+
+class Question(db.Model):
+    __tablename__ = 'questions'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_text = Column(String, nullable=False)
+    choice1 = Column(String)
+    choice2 = Column(String)
+    choice3 = Column(String)
+    choice4 = Column(String)
+    isChoice = Column(Boolean)
+    answer = Column(String)
+
+    exam_id = Column(UUID(as_uuid=True), ForeignKey('exams.id'), nullable=False)
+    topic_id = Column(UUID(as_uuid=True), ForeignKey('topics.id') ,default=uuid.uuid4)
+
+class UserExamResult(db.Model):
+    __tablename__ = 'user_exam_result'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime)
-    
-    user = relationship("User", back_populates="password_resets")
+    exam_id = Column(UUID(as_uuid=True), ForeignKey('exams.id'), nullable=False)
+    grade = Column(Float)
