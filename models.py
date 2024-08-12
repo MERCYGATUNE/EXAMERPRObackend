@@ -99,3 +99,11 @@ class UserExamResult(db.Model):
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
     exam_id = Column(UUID(as_uuid=True), ForeignKey('exams.id'), nullable=False)
     grade = Column(Float)
+
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'user_id': str(self.user_id),
+            'exam_id': str(self.exam_id),
+            'grade': self.grade
+        }

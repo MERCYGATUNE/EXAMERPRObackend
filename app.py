@@ -252,65 +252,9 @@ def cancel_subscription():
         return jsonify({'success': False, 'error': f'Rate limit exceeded'}, 429)
     except stripe.error.AuthenticationError as e:
         return jsonify({'success': False, 'error': 'Authentication error'}, 401)
-@app.route('/create_question', methods=['POST'])
-def create_question():
-    data = request.get_json()
 
-    # Validate data
-    question_text = data.get('question')
-    topic_id = data.get('topic_id')  # Expect UUID or None
-    mode = data.get('mode')
-    exam_mode = data.get('exam_mode')
 
-    if not question_text:
-        return jsonify({"error": "Question text is required"}), 400
 
-    # Convert topic_id to UUID if not None
-    if topic_id:
-        if isinstance(topic_id, int):
-            topic_id = str(topic_id)  # Convert integer to string
-        try:
-            topic_id = uuid.UUID(topic_id)
-        except ValueError:
-            return jsonify({"error": "Invalid topic_id format"}), 400
-
-    # Create new question instance
-    new_question = Questions(
-        question=question_text,
-        topic_id=topic_id,  # Should be a UUID or None
-        mode=mode,
-        exam_mode=exam_mode
-    )
-
-    # Add to session and commit
-    db.session.add(new_question)
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-
-    return jsonify({"message": "Question created successfully", "question_id": str(new_question.id)}), 201
-@app.route('/questions/<uuid:question_id>/answers', methods=['POST'])
-def create_answer(question_id):
-    data = request.get_json()
-    answer = Answers(
-        question_id=question_id,
-        answer_type=data['answer_type'],
-        answer=data['answer']
-    )
-    db.session.add(answer)
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-    return jsonify(answer.to_dict()), 201
-
-@app.route('/questions', methods=['GET'])
-def get_questions():
-    questions = Questions.query.all()
-    return jsonify([question.to_dict() for question in questions])
 
 # @app.route('/questions/<uuid:question_id>', methods=['DELETE'])
 # def delete_question(question_id):
@@ -705,10 +649,13 @@ def update_user():
 def submit_exam():
     data = request.json
     exam_id = data['exam_id']
+    user_id = data['user_id']
     user_answers = data['user_answers']  # This is a dictionary of question IDs and selected answers
     
+    exam_uuid = UUID(exam_id, version=4)
+    user_uuid = UUID(user_id, version=4)
     # Fetch the exam from the database
-    exam = Exams.query.get(exam_id)
+    exam = Exams.query.get(exam_uuid)
     if not exam:
         return jsonify({'error': 'Exam not found'}), 404
     
@@ -722,16 +669,23 @@ def submit_exam():
         correct_answer = question.answer
         user_answer = user_answers.get(question_id)
         
-        if user_answer and user_answer == correct_answer:
+        if user_answer == correct_answer:
             correct_answers += 1
     
     # Calculate grade as a percentage
     grade = (correct_answers / total_questions) * 100
     
-    result = UserExamResult(user_id=user_id, exam_id=exam_id, grade=grade)
+    result = UserExamResult(user_id=user_uuid, exam_id=exam_uuid, grade=grade)
     db.session.add(result)
     db.session.commit()
     return jsonify({'grade': grade})
+
+@app.route('/get_submission/<exam_id>', methods=['GET'])
+def get_submission(exam_id):
+    # Fetch the exam results from the database
+    exam_uuid = UUID(exam_id, version=4)
+    result = UserExamResult.query.filter_by(exam_id=exam_uuid).first()
+    return result.to_dict(), 200
 
 @app.route('/add_exams', methods=['POST'])
 def add_exam():
@@ -781,5 +735,59 @@ def add_exam():
         print(e)
         return jsonify({'message': 'Failed to add exam', 'error': str(e)}), 500
 
+@app.route('/get_exams', methods=['GET'])
+def get_exams():
+    exams = Exams.query.all()
+    exams_data = [
+        {
+            'id': exam.id,
+            'exam_name': exam.exam_name,
+            'category': exam.category,
+           'subcategory': exam.subcategory,
+            'createdBy': exam.createdBy,
+            'createdOn': exam.createdOn.isoformat(),
+            'exam_duration': exam.exam_duration,
+            'examiner_id': str(exam.examiner_id),
+        } for exam in exams]
+    return jsonify(exams_data), 200
+
+@app.route('/get_exam/<exam_id>', methods=['GET'])
+def get_exam(exam_id):
+    try:
+        exam_id = UUID(exam_id, version=4)
+        exam = Exams.query.filter_by(id=exam_id).first()
+        if not exam:
+            return jsonify({'error': 'Exam not found'}), 404
+        exam_data = {
+            'id': str(exam.id),  # Ensure UUID is converted to string
+            'exam_name': exam.exam_name,
+            'category': exam.category,
+            'subcategory': exam.subcategory,
+            'createdBy': exam.createdBy,
+            'createdOn': exam.createdOn,
+            'exam_duration': exam.exam_duration,
+            'examiner_id': str(exam.examiner_id),
+            'questions': [
+                {
+                    'id': str(question.id),  # Ensure UUID is converted to string
+                    'question_text': question.question_text,
+                    'choice1': question.choice1,
+                    'choice2': question.choice2,
+                    'choice3': question.choice3,
+                    'choice4': question.choice4,
+                    'isChoice': question.isChoice,
+                } for question in exam.questions
+            ]
+        }
+        return jsonify(exam_data), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'error': 'Something went wrong', 'message': str(e)}), 500
+
+@app.route('/get_all_exam_uuids')
+def get_all_exam_uuids():
+    exams = Exams.query.all()
+    exam_uuids = [str(exam.id) for exam in exams]
+    return jsonify(exam_uuids), 200
 if __name__ == '__main__':
     app.run(debug=True, port=5555)
