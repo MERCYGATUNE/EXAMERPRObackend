@@ -10,10 +10,19 @@ import logging
 from dotenv import load_dotenv
 import os
 from uuid import UUID
+import json
 
 from flask_mail import Mail, Message
 
 app = Flask(__name__)
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, UUID):
+            return str(obj)
+        return super().default(obj)
+
+app.json_encoder = CustomJSONEncoder
 app.config.from_object('config.Config')
 load_dotenv()
 
@@ -132,7 +141,7 @@ def create_subscription():
     try:
         amount_cents = int(float(amount) * 100)
 
-    
+
 
         payment_intent = stripe.PaymentIntent.create(
             amount=amount_cents, 
@@ -182,6 +191,17 @@ def create_subscription():
         return jsonify({'success': False, 'error': 'Payment failed. Please try again.'}), 400
     except Exception as e:
         return jsonify({'success': False, 'error': 'An error occurred. Please try again later.'}), 500
+    
+@app.route('/all_users', methods=['GET'])
+def get_all_users():
+    users = User.query.all()
+    return jsonify([{
+        'id': str(user.id),
+        'email': user.email,
+        'username': user.username,
+        'role': user.role,
+        'created_at': user.created_at.isoformat(),
+    } for user in users])
 
 @app.route('/update-subscription', methods=['POST'])
 def update_subscription():
@@ -653,6 +673,33 @@ def delete_account():
         return jsonify({"message": "Account has been deleted."}), 200
     else:
         return jsonify({"message": "User not found"}), 404
+
+@app.route('/update_user', methods=['POST'])
+def update_user():
+    data = request.get_json()
+    user_id = data.get('id')
+    username = data.get('username')
+    email = data.get('email')
+    role = data.get('role')
+    new_password = data.get('password')
+
+    userUUID = uuid.UUID(user_id) 
+
+    user = User.query.get(userUUID)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    if username:
+        user.username = username
+    if email:
+        user.email = email
+    if role:
+        user.role = role
+    if new_password:
+        new_hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+        user.password = new_hashed_password.decode('utf-8')
+
+    db.session.commit()
+    return jsonify({'message': 'User updated successfully'}), 200
 
 
 if __name__ == '__main__':
