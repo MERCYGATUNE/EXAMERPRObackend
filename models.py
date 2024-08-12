@@ -78,21 +78,38 @@ class Exams(db.Model):
     examiner_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), default=uuid.uuid4)
 
     questions = relationship('Question', backref='exams')
-
 class Question(db.Model):
     __tablename__ = 'questions'
+    
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     question_text = Column(String, nullable=False)
     choice1 = Column(String)
     choice2 = Column(String)
     choice3 = Column(String)
     choice4 = Column(String)
-    isChoice = Column(Boolean)
+    isChoice = Column(Boolean, default=False)
     answer = Column(String)
-
+    
     exam_id = Column(UUID(as_uuid=True), ForeignKey('exams.id'), nullable=False)
-    topic_id = Column(UUID(as_uuid=True), ForeignKey('topics.id') ,default=uuid.uuid4)
+    topic_id = Column(UUID(as_uuid=True), ForeignKey('topics.id'), nullable=False)
 
+    # Optional: Define relationships if needed
+    exam = relationship("Exam", back_populates="questions")
+    topic = relationship("Topic", back_populates="questions")
+
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'question_text': self.question_text,
+            'choice1': self.choice1,
+            'choice2': self.choice2,
+            'choice3': self.choice3,
+            'choice4': self.choice4,
+            'isChoice': self.isChoice,
+            'answer': self.answer,
+            'exam_id': str(self.exam_id),
+            'topic_id': str(self.topic_id)
+        }
 class UserExamResult(db.Model):
     __tablename__ = 'user_exam_result'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
