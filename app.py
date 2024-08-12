@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, url_for
 from itsdangerous import URLSafeTimedSerializer
 from flask_cors import CORS
-from models import db, migrate, User, Subscription,Questions,Answers,ExamCategory,SubCategory,Topic
+from models import db, migrate, User, Subscription,ExamCategory,SubCategory,Topic, Exams, Question, UserExamResult
 import uuid
 from datetime import datetime, timedelta
 import bcrypt
@@ -700,6 +700,39 @@ def update_user():
 
     db.session.commit()
     return jsonify({'message': 'User updated successfully'}), 200
+
+@app.route('/submit_exam', methods=['POST'])
+def submit_exam():
+    data = request.json
+    exam_id = data['exam_id']
+    user_answers = data['user_answers']  # This is a dictionary of question IDs and selected answers
+    
+    # Fetch the exam from the database
+    exam = Exams.query.get(exam_id)
+    if not exam:
+        return jsonify({'error': 'Exam not found'}), 404
+    
+    # Initialize variables to calculate the score
+    total_questions = len(exam.questions)
+    correct_answers = 0
+
+    # Compare user answers with correct answers
+    for question in exam.questions:
+        question_id = question.id
+        correct_answer = question.answer
+        user_answer = user_answers.get(question_id)
+        
+        if user_answer and user_answer == correct_answer:
+            correct_answers += 1
+    
+    # Calculate grade as a percentage
+    grade = (correct_answers / total_questions) * 100
+    
+    result = UserExamResult(user_id=user_id, exam_id=exam_id, grade=grade)
+    db.session.add(result)
+    db.session.commit()
+    return jsonify({'grade': grade})
+
 
 
 if __name__ == '__main__':

@@ -1,148 +1,134 @@
+import uuid
+from faker import Faker
 from datetime import datetime, timedelta
 from app import app, db
-from models import User, Subscription, Topic,Questions,Answers,ExamCategory
+from models import (ExamCategory, User, Exams, SubCategory, Subscription, Topic, 
+                                   UserExamResult, Question)
 import bcrypt
-from faker import Faker
-import random
-from uuid import UUID
-import uuid
 
 fake = Faker()
 
-# Generate sample data for users
-def generate_users(num_users):
-    users = []
-    for _ in range(num_users):
-        email = fake.email()
-        password = bcrypt.hashpw(fake.password().encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        username = fake.user_name()
-        user = User(
-            email=email,
-            password=password,
-            username=username,
-            confirmed_email=random.choice([True, False]),
-            role=random.choice(["user", "admin"]),
-            referral_code=fake.uuid4(),
-            created_at=datetime.utcnow()
-        )
-        users.append(user)
-    return users
-
-# Generate sample data for subscriptions
-def generate_subscriptions(users, num_subscriptions):
-    subscriptions = []
-    for _ in range(num_subscriptions):
-        user = random.choice(users)
-        subscription = Subscription(
-            user_id=user.id,  # Use .id attribute directly
-            type=random.choice(["basic", "premium"]),
-            amount=round(random.uniform(10.0, 200.0), 2),
-            created_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(days=random.randint(30, 365))
-        )
-        subscriptions.append(subscription)
-    return subscriptions
-
-# Generate sample data for topics
-def generate_topics(users, num_topics):
-    topics = []
-    for _ in range(num_topics):
-        topic = Topic(
-            name=fake.word(),
-            description=fake.text(),
-            user_id=random.choice(users).id,  # Use .id attribute directly
-            sub_category_id=None  # Adjust as needed
-        )
-        topics.append(topic)
-    return topics
-
-def generate_questions(num_questions, users):
-    questions = []
-    for _ in range(num_questions):
-        topic_id = None
-        if random.choice([True, False]):
-            topic_id = uuid.uuid4()  # Generate a UUID if needed
-        
-        question = Questions(
-            question=fake.sentence(),
-            topic_id=topic_id,
-            mode=random.choice(["easy", "medium", "hard"]),
-            exam_mode=random.choice(["standard", "timed"]),
-            created_at=datetime.utcnow()
-        )
-        questions.append(question)
-    return questions
-def generate_answers(questions):
-    answers = []
-    for question in questions:
-        answer = Answers(
-            question_id=question.id,
-            answer_type="[Text ,choose]",  
-            answer="Sample Answer"         
-        )
-        answers.append(answer)
-    return answers
-def generate_examcategory(users):
-    exam_categories = []
-    for _ in range(len(users)):
-        user = random.choice(users)
-        user_id = user.id if isinstance(user.id, UUID) else UUID(user.id)  # Ensure user_id is a UUID object
+def seed_database():
+    # Exam Categories
+    for _ in range(5):
         exam_category = ExamCategory(
-            name="Sample Category",
-            description="Sample Description",
-            user_id=user_id
+            id=uuid.uuid4(),
+            name=fake.word(),
+            description=fake.text()
         )
-        exam_categories.append(exam_category)
-    return exam_categories
+        db.session.add(exam_category)
 
-# Seeding function
-def seed():
-    with app.app_context():
-        # Create tables if they don't exist
-        db.create_all()
+    db.session.commit()
 
-        # Clear existing data
-        db.session.query(User).delete()
-        db.session.query(Subscription).delete()
-        db.session.query(Topic).delete()
-        db.session.query(Questions).delete()
-        db.session.query(Answers).delete()
-        db.session.commit()
-        # Generate and seed users
-        user_instances = generate_users(10)
-        for user in user_instances:
-            db.session.add(user)
-        db.session.commit()
+    # Users
+    for _ in range(10):
+        password = fake.password()
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        user = User(
+            id=uuid.uuid4(),
+            username=fake.user_name(),
+            email=fake.email(),
+            password=hashed_password.decode('utf-8'),
+            confirmed_email=fake.boolean(),
+            role=fake.word(),
+            referral_code=fake.uuid4(),
+            created_at=datetime.now()
+        )
+        db.session.add(user)
 
-        # Generate and seed subscriptions
-        subscriptions = generate_subscriptions(user_instances, 5)
-        for sub in subscriptions:
-            db.session.add(sub)
-        db.session.commit()
+    db.session.commit()
 
-        questions = generate_questions(10, user)
-        for question in questions:
-            db.session.add(question)
-        db.session.commit()
+    # Subcategories
+    exam_categories = ExamCategory.query.all()
+    for category in exam_categories:
+        for _ in range(3):
+            sub_category = SubCategory(
+                id=uuid.uuid4(),
+                name=fake.word(),
+                exam_category_id=category.id
+            )
+            db.session.add(sub_category)
 
+    db.session.commit()
 
-        answers = generate_answers(questions)
-        for answer in answers:
-            db.session.add(answer)
-        db.session.commit()
-
-        # Generate and seed topics
-        topics = generate_topics(user_instances, 5)
-        for topic in topics:
+    # Topics
+    subcategories = SubCategory.query.all()
+    for subcategory in subcategories:
+        for _ in range(2):
+            topic = Topic(
+                id=uuid.uuid4(),
+                name=fake.word(),
+                sub_category_id=subcategory.id
+            )
             db.session.add(topic)
-        db.session.commit()
-          # Generate and seed exam_categories
-        exam_categories = generate_examcategory(user_instances)
-        for exam_category in exam_categories:
-            db.session.add(exam_category)
-        db.session.commit()
 
-        print("Database seeded successfully")
+    db.session.commit()
+
+    # Exams
+    users = User.query.all()
+    for _ in range(10):
+        exam = Exams(
+            id=uuid.uuid4(),
+            exam_name=fake.word(),
+            category=fake.word(),
+            subcategory=fake.word(),
+            createdBy=fake.name(),
+            createdOn=datetime.now(),
+            exam_duration=fake.random_int(min=30, max=180),
+            examiner_id=fake.random.choice([u.id for u in users])
+        )
+        db.session.add(exam)
+
+    db.session.commit()
+
+    # Questions
+    exams = Exams.query.all()
+    topics = Topic.query.all()
+    for exam in exams:
+        for _ in range(5):
+            question = Question(
+                id=uuid.uuid4(),
+                question_text=fake.sentence(),
+                choice1=fake.word(),
+                choice2=fake.word(),
+                choice3=fake.word(),
+                choice4=fake.word(),
+                isChoice=fake.boolean(),
+                answer=fake.word(),
+                exam_id=exam.id,
+                topic_id=fake.random.choice([t.id for t in topics]) if topics else None
+            )
+            db.session.add(question)
+
+    db.session.commit()
+
+    # Subscriptions
+    for user in users:
+        subscription = Subscription(
+            id=uuid.uuid4(),
+            type=fake.word(),
+            amount=fake.random_number(digits=5),
+            created_at=datetime.now(),
+            expires_at=datetime.now() + timedelta(days=365),
+            user_id=user.id
+        )
+        db.session.add(subscription)
+
+    db.session.commit()
+
+    # User Exam Results
+    for user in users:
+        user_exam_result = UserExamResult(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            exam_id=fake.random.choice([e.id for e in exams]),
+            grade=fake.random_int(min=0, max=100)
+        )
+        db.session.add(user_exam_result)
+
+    db.session.commit()
 
 if __name__ == '__main__':
-    seed()
+    with app.app_context():
+        print("added bruv")
+        seed_database()
