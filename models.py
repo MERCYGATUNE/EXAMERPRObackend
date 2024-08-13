@@ -77,7 +77,7 @@ class Exams(db.Model):
     exam_duration = Column(Integer)
     examiner_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), default=uuid.uuid4)
 
-    questions = relationship('Question', backref='exams')
+  
 
 class Question(db.Model):
     __tablename__ = 'questions'
@@ -90,12 +90,12 @@ class Question(db.Model):
     isChoice = Column(Boolean)
     answer = Column(String)
 
-    exam_id = Column(UUID(as_uuid=True), ForeignKey('exams.id'), nullable=False)
+
     topic_id = Column(UUID(as_uuid=True), ForeignKey('topics.id') ,default=uuid.uuid4)
 
 class UserExamResult(db.Model):
     __tablename__ = 'user_exam_result'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    exam_id = Column(UUID(as_uuid=True), ForeignKey('exams.id'), nullable=False)
+    # exam_id = Column(UUID(as_uuid=True), ForeignKey('exams.id'), nullable=False)
     grade = Column(Float)
