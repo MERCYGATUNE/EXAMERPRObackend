@@ -53,7 +53,7 @@ class Topic(db.Model):
 class SubCategory(db.Model):
     __tablename__ = 'subcategory'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String)
+    name = Column(String ,nullable=False)
     exam_category_id = Column(UUID(as_uuid=True), ForeignKey('examcategory.id'), nullable=False)
 
     topics = relationship('Topic', backref='subcategory')
