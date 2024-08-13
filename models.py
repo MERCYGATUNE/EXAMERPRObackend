@@ -22,7 +22,7 @@ class User(db.Model):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     subscriptions = relationship("Subscription", back_populates="user", cascade='all, delete')
-    exams = relationship("Exams", backref="user")
+    exams = relationship("Exams", backref="user", cascade="all, delete-orphan", passive_deletes=True)
 
 class Subscription(db.Model):
     __tablename__ = 'subscription'
@@ -31,7 +31,7 @@ class Subscription(db.Model):
     amount = Column(Float)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     expires_at = Column(DateTime)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     
     user = relationship("User", back_populates="subscriptions")
 
@@ -75,9 +75,9 @@ class Exams(db.Model):
     createdBy = Column(String, nullable=False)
     createdOn = Column(String, nullable=False)
     exam_duration = Column(Integer)
-    examiner_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), default=uuid.uuid4)
+    examiner_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), default=uuid.uuid4)
 
-    questions = relationship('Question', backref='exams')
+    questions = relationship('Question', backref='exams', cascade="all, delete-orphan", passive_deletes=True)
 
 class Question(db.Model):
     __tablename__ = 'questions'
@@ -90,14 +90,14 @@ class Question(db.Model):
     isChoice = Column(Boolean)
     answer = Column(String)
 
-    exam_id = Column(UUID(as_uuid=True), ForeignKey('exams.id'), nullable=False)
+    exam_id = Column(UUID(as_uuid=True), ForeignKey('exams.id', ondelete='CASCADE'), nullable=False)
     topic_id = Column(UUID(as_uuid=True), ForeignKey('topics.id') ,default=uuid.uuid4)
 
 class UserExamResult(db.Model):
     __tablename__ = 'user_exam_result'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    exam_id = Column(UUID(as_uuid=True), ForeignKey('exams.id'), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    exam_id = Column(UUID(as_uuid=True), ForeignKey('exams.id', ondelete='CASCADE'), nullable=False)
     grade = Column(Float)
 
     def to_dict(self):

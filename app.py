@@ -665,7 +665,8 @@ def submit_exam():
 
     # Compare user answers with correct answers
     for question in exam.questions:
-        question_id = question.id
+        question_uuid = question.id
+        question_id = str(question_uuid)
         correct_answer = question.answer
         user_answer = user_answers.get(question_id)
         
@@ -673,19 +674,40 @@ def submit_exam():
             correct_answers += 1
     
     # Calculate grade as a percentage
+    print(total_questions)
     grade = (correct_answers / total_questions) * 100
     
     result = UserExamResult(user_id=user_uuid, exam_id=exam_uuid, grade=grade)
     db.session.add(result)
     db.session.commit()
-    return jsonify({'grade': grade})
+    return jsonify({'result_id': str(result.id)})
 
-@app.route('/get_submission/<exam_id>', methods=['GET'])
-def get_submission(exam_id):
-    # Fetch the exam results from the database
-    exam_uuid = UUID(exam_id, version=4)
-    result = UserExamResult.query.filter_by(exam_id=exam_uuid).first()
-    return result.to_dict(), 200
+@app.route('/get_submission/<result_id>', methods=['GET'])
+def get_submission(result_id):
+    result_uuid = UUID(result_id, version=4)
+    result = UserExamResult.query.filter_by(id=result_uuid).first()
+    
+    if not result:
+        return jsonify({'error': 'Result not found'}), 404
+    
+    # Fetch the associated exam using the exam_id from the result
+    exam_id = result.exam_id
+    exam = Exams.query.filter_by(id=exam_id).first()
+    
+    if not exam:
+        return jsonify({'error': 'Exam not found'}), 404
+    
+    # Combine result and exam data in the response
+    response_data = {
+        'result': result.to_dict(),
+        'exam': {
+            'exam_name': exam.exam_name,
+            'category': exam.category,
+            'subcategory': exam.subcategory
+        }
+    }
+    
+    return jsonify(response_data), 200
 
 @app.route('/add_exams', methods=['POST'])
 def add_exam():
@@ -745,11 +767,59 @@ def get_exams():
             'category': exam.category,
            'subcategory': exam.subcategory,
             'createdBy': exam.createdBy,
-            'createdOn': exam.createdOn.isoformat(),
+            'createdOn': exam.createdOn,
             'exam_duration': exam.exam_duration,
             'examiner_id': str(exam.examiner_id),
         } for exam in exams]
     return jsonify(exams_data), 200
+
+@app.route('/update_exam', methods=['POST'])
+def update_exam():
+    try:
+        data = request.json
+        exam_id = data['id']
+        exam_uuid = UUID(exam_id, version=4)
+        exam = Exams.query.get(exam_uuid)
+        if not exam:
+            return jsonify({'error': 'Exam not found'}), 404
+
+        if 'exam_name' in data:
+            exam.exam_name = data['exam_name']
+        if 'category' in data:
+            exam.category = data['category']
+        if'subcategory' in data:
+            exam.subcategory = data['subcategory']
+        if 'createdBy' in data:
+            exam.createdBy = data['createdBy']
+        if 'createdOn' in data:
+            exam.createdOn = data['createdOn']
+        if 'exam_duration' in data:
+            exam.exam_duration = data['exam_duration']
+        db.session.commit()
+        return jsonify({'message': 'Exam updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'message': 'Failed to update exam', 'error': str(e)}), 500
+    
+@app.route('/delete_exam', methods=['POST'])
+def delete_exam():
+    try:
+        data = request.json
+        exam_id = data['exam_id']
+        exam_uuid = UUID(exam_id, version=4)
+        exam = Exams.query.get(exam_uuid)
+        if not exam:
+            return jsonify({'error': 'Exam not found'}), 404
+        db.session.delete(exam)
+        db.session.commit()
+        return jsonify({'message': 'Exam deleted successfully'}), 201
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'message': 'Failed to delete exam', 'error': str(e)}), 500
+
+
 
 @app.route('/get_exam/<exam_id>', methods=['GET'])
 def get_exam(exam_id):
