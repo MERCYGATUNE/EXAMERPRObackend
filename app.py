@@ -425,50 +425,17 @@ def delete_exam_category(id):
     
     
     
-    
-    
-    
-        # SUB CATEGORIES
-
-# @app.route('/subcategory', methods=['POST'])
-# def create_subcategory():
-#     data = request.get_json()
-    
-#     # Validate request
-#     if not data or not data.get('name') or not data.get('exam_category_id'):
-#         abort(400, "Missing required fields: 'name', 'exam_category_id'")
-    
-#     # Convert exam_category_id to UUID and validate
-#     try:
-#         exam_category_id = UUID(data['exam_category_id'])
-#     except ValueError:
-#         abort(400, "Invalid 'exam_category_id' format")
-
-#     # Create and add subcategory
-#     try:
-#         subcategory = SubCategory(
-#             name=data['name'],
-#             exam_category_id=exam_category_id
-#         )
-#         db.session.add(subcategory)
-#         db.session.commit()
-#         return jsonify({"message": "SubCategory created", "id": str(subcategory.id)}), 201
-#     except Exception as e:
-#         db.session.rollback()
-#         # Log the exception for debugging purposes
-#         app.logger.error(f"Error creating subcategory: {str(e)}")
-#         abort(500, "Internal Server Error")
-
+       # SUBCATEGORIES    
 @app.route('/subcategory', methods=['POST'])
 def create_subcategory():
     data = request.get_json()
     if not data or not data.get('name') or not data.get('exam_category_id'):
-        abort(400, description="Missing required fields: 'name', 'exam_category_id'")
+        abort(400, "Missing required fields: 'name', 'exam_category_id'")
 
     try:
         exam_category_id = UUID(data['exam_category_id'])  # Convert to UUID
     except ValueError:
-        abort(400, description="Invalid 'exam_category_id' format")
+        abort(400, "Invalid 'exam_category_id' format")
 
     subcategory = SubCategory(
         name=data['name'],
@@ -478,10 +445,6 @@ def create_subcategory():
     db.session.commit()
 
     return jsonify({"message": "SubCategory created", "id": str(subcategory.id)}), 201
-
-
-
-
 
 
 
@@ -752,10 +715,256 @@ def submit_exam():
 
 
 
+     # UserExamResult
+     
+# @app.route('/user_exam_result', methods=['POST'])
+# def create_user_exam_result():
+#     data = request.get_json()
+#     user_exam_result = UserExamResult(
+#         id=uuid.uuid4(),
+#         user_id=uuid.UUID(data.get('user_id')),
+#         exam_id=uuid.UUID(data.get('exam_id')),
+#         grade=data.get('grade')
+#     )
+#     db.session.add(user_exam_result)
+#     db.session.commit()
+#     return jsonify({'message': 'UserExamResult created successfully', 'user_exam_result': user_exam_result.id}), 201
+
+
+
+# @app.route('/user_exam_result', methods=['GET'])
+# def get_user_exam_results():
+#     print("Route accessed") 
+#     user_exam_results = UserExamResult.query.all()
+#     results = []
+#     for result in user_exam_results:
+#         results.append({
+#             'id': str(result.id),
+#             'user_id': str(result.user_id),
+#             'exam_id': str(result.exam_id),
+#             'grade': result.grade
+#         })
+#     return jsonify(results), 200
+     
+# @app.route('/user_exam_result/<uuid:user_exam_result_id>', methods=['GET'])
+# def get_user_exam_result(user_exam_result_id):
+#     user_exam_result = UserExamResult.query.get_or_404(user_exam_result_id)
+#     result = {
+#         'id': str(user_exam_result.id),
+#         'user_id': str(user_exam_result.user_id),
+#         'exam_id': str(user_exam_result.exam_id),
+#         'grade': user_exam_result.grade
+#     }
+#     return jsonify(result), 200
+     
+# @app.route('/user_exam_result/<uuid:user_exam_result_id>', methods=['PUT'])
+# def update_user_exam_result(user_exam_result_id):
+#     user_exam_result = UserExamResult.query.get_or_404(user_exam_result_id)
+#     data = request.get_json()
+#     user_exam_result.user_id = data.get('user_id', user_exam_result.user_id)
+#     user_exam_result.exam_id = data.get('exam_id', user_exam_result.exam_id)
+#     user_exam_result.grade = data.get('grade', user_exam_result.grade)
+#     db.session.commit()
+#     return jsonify({'message': 'UserExamResult updated successfully'}), 200
+
+
+# @app.route('/user_exam_result/<uuid:user_exam_result_id>', methods=['DELETE'])
+# def delete_user_exam_result(user_exam_result_id):
+#     user_exam_result = UserExamResult.query.get_or_404(user_exam_result_id)
+#     db.session.delete(user_exam_result)
+#     db.session.commit()
+#     return jsonify({'message': 'UserExamResult deleted successfully'}), 200
+
+# @app.route('/user_exam_result', methods=['POST'])
+
+# def create_user_exam_result():
+    
+#     data = request.get_json()
+    
+#     user_id = uuid.UUID(data.get('user_id'))
+#     exam_id = uuid.UUID(data.get('exam_id'))
+    
+    
+#     user_exam_result = UserExamResult(
+#         user_id=user_id,
+#         exam_id=exam_id,
+#         grade=data.get('grade')
+#     )
+#     db.session.add(user_exam_result)
+#     db.session.commit()
+#     return jsonify({'message': 'UserExamResult created successfully', 'user_exam_result': user_exam_result.id}), 201
+
+
+
+
+# @app.route('/user_exam_result', methods=['GET'])
+
+# def get_user_exam_results():
+#     user_exam_results = UserExamResult.query.all()
+#     results = []
+#     for result in user_exam_results:
+#         results.append({
+#             'id': result.id,
+#             'user_id': result.user_id,
+#             'exam_id': result.exam_id,
+#             'grade': result.grade
+#         })
+#     return jsonify(results), 200
+
+
+
+
+
+# # @app.route('/user_exam_result/<uuid:user_exam_result_id>', methods=['GET'])
+# # def get_user_exam_result(user_exam_result_id):
+# #     user_exam_result = UserExamResult.query.get_or_404(str(user_exam_result_id))
+# #     result = {
+# #         'id': user_exam_result.id,
+# #         'user_id': user_exam_result.user_id,
+# #         'exam_id': user_exam_result.exam_id,
+# #         'grade': user_exam_result.grade
+# #     }
+# #     return jsonify(result), 200
+
+# @app.route('/user_exam_result/<uuid:user_exam_result_id>', methods=['GET'])
+# def get_user_exam_result(user_exam_result_id):
+#     # Directly use user_exam_result_id as it is already a UUID object
+#     user_exam_result = UserExamResult.query.get_or_404(user_exam_result_id)
+#     result = {
+#         'id': str(user_exam_result.id),  # Convert UUID to string for JSON response
+#         'user_id': str(user_exam_result.user_id),  # Convert UUID to string
+#         'exam_id': str(user_exam_result.exam_id),  # Convert UUID to string
+#         'grade': user_exam_result.grade
+#     }
+#     return jsonify(result), 200
+
+
+
+
+
+# # @app.route('/user_exam_result/<uuid:user_exam_result_id>', methods=['PUT'])
+# # def update_user_exam_result(user_exam_result_id):
+# #     user_exam_result = UserExamResult.query.get_or_404(str(user_exam_result_id))
+# #     data = request.get_json()
+# #     user_exam_result.user_id = str(uuid.UUID(data.get('user_id', user_exam_result.user_id)))
+# #     user_exam_result.exam_id = str(uuid.UUID(data.get('exam_id', user_exam_result.exam_id)))
+# #     user_exam_result.grade = data.get('grade', user_exam_result.grade)
+# #     db.session.commit()
+# #     return jsonify({'message': 'UserExamResult updated successfully'}), 200
+# @app.route('/user_exam_result/<uuid:user_exam_result_id>', methods=['PUT'])
+# def update_user_exam_result(user_exam_result_id):
+#     user_exam_result = UserExamResult.query.get_or_404(user_exam_result_id)
+#     data = request.get_json()
+    
+#     # Convert UUID strings to UUID objects only if present in the request data
+#     if 'user_id' in data:
+#         user_exam_result.user_id = uuid.UUID(data['user_id'])  # Convert string to UUID if provided
+#     if 'exam_id' in data:
+#         user_exam_result.exam_id = uuid.UUID(data['exam_id'])  # Convert string to UUID if provided
+#     if 'grade' in data:
+#         user_exam_result.grade = data['grade']
+    
+#     db.session.commit()
+#     return jsonify({'message': 'UserExamResult updated successfully'}), 200
+
+
+
+
+
+
+
+# # @app.route('/user_exam_result/<uuid:user_exam_result_id>', methods=['DELETE'])
+# # def delete_user_exam_result(user_exam_result_id):
+# #     user_exam_result = UserExamResult.query.get_or_404(str(user_exam_result_id))
+# #     db.session.delete(user_exam_result)
+# #     db.session.commit()
+# #     return jsonify({'message': 'UserExamResult created successfully', 'user_exam_result': user_exam_result.id}), 201
+
+# @app.route('/user_exam_result/<uuid:user_exam_result_id>', methods=['DELETE'])
+# def delete_user_exam_result(user_exam_result_id):
+#     user_exam_result = UserExamResult.query.get_or_404(user_exam_result_id)
+#     db.session.delete(user_exam_result)
+#     db.session.commit()
+#     return jsonify({'message': 'UserExamResult deleted successfully', 'user_exam_result': str(user_exam_result.id)}), 200
+
+@app.route('/user_exam_result', methods=['POST'])
+def create_user_exam_result():
+    data = request.json
+    try:
+        new_result = UserExamResult(
+            id=uuid.uuid4(),
+            user_id=data['user_id'],
+            exam_id=data['exam_id'],
+            grade=data['grade']
+        )
+        db.session.add(new_result)
+        db.session.commit()
+        return jsonify({'message': 'UserExamResult created', 'id': str(new_result.id)}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/user_exam_result/<uuid:id>', methods=['GET'])
+def get_user_exam_result(id):
+ try:
+    result = UserExamResult.query.get(uuid.UUID(id))
+    if result:
+        return jsonify({
+            'id': str(result.id),
+            'user_id': str(result.user_id),
+            'exam_id': str(result.exam_id),
+            'grade': result.grade
+        })
+    return jsonify({'message': 'UserExamResult not found'}), 404
+ except ValueError:
+    return jsonify({'message': 'Invalid UUID format'}), 400
+
+
+@app.route('/user_exam_result/<uuid:id>', methods=['PUT'])
+def update_user_exam_result(id):
+    data = request.json
+    try:
+        result = UserExamResult.query.get(uuid.UUID(id))
+        
+        if result:
+            result.user_id = uuid.UUID(data.get('user_id', result.user_id))
+            result.exam_id = uuid.UUID(data.get('exam_id', result.exam_id))
+            result.grade = data.get('grade', result.grade)
+            db.session.commit()
+            return jsonify({'message': 'UserExamResult updated'})
+        return jsonify({'message': 'UserExamResult not found'}), 404
+    except ValueError:
+        return jsonify({'message': 'Invalid UUID format'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/user_exam_result/<uuid:id>', methods=['DELETE'])
+def delete_user_exam_result(id):
+    try:
+        result = UserExamResult.query.get(uuid.UUID(id))
+        if result:
+            db.session.delete(result)
+            db.session.commit()
+            return jsonify({'message': 'UserExamResult deleted'})
+        return jsonify({'message': 'UserExamResult not found'}), 404
+    except ValueError:
+        return jsonify({'message': 'Invalid UUID format'}), 400
+
+     
+     
+     
+     
+         
+
+
+
+
 
 
 # http://127.0.0.1:5000/examcategories , it works!!1.
-# http://127.0.0.1:5000/subcategories  , get only works
+# http://127.0.0.1:5000/subcategories  , it works
 
 if __name__ == '__main__':
     app.run(debug=True, port=5555)
