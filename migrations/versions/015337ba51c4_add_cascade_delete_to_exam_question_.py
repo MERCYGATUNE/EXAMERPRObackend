@@ -1,8 +1,8 @@
-"""migration
+"""Add cascade delete to Exam-Question relationship
 
-Revision ID: 3c9f71789d11
+Revision ID: 015337ba51c4
 Revises: 
-Create Date: 2024-08-12 14:37:31.212627
+Create Date: 2024-08-13 10:36:03.945763
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3c9f71789d11'
+revision = '015337ba51c4'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -45,7 +45,7 @@ def upgrade():
     sa.Column('createdOn', sa.String(), nullable=False),
     sa.Column('exam_duration', sa.Integer(), nullable=True),
     sa.Column('examiner_id', sa.UUID(), nullable=True),
-    sa.ForeignKeyConstraint(['examiner_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['examiner_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('subcategory',
@@ -62,7 +62,7 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('expires_at', sa.DateTime(), nullable=True),
     sa.Column('user_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('topics',
@@ -77,8 +77,8 @@ def upgrade():
     sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('exam_id', sa.UUID(), nullable=False),
     sa.Column('grade', sa.Float(), nullable=True),
-    sa.ForeignKeyConstraint(['exam_id'], ['exams.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['exam_id'], ['exams.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('questions',
@@ -92,7 +92,7 @@ def upgrade():
     sa.Column('answer', sa.String(), nullable=True),
     sa.Column('exam_id', sa.UUID(), nullable=False),
     sa.Column('topic_id', sa.UUID(), nullable=True),
-    sa.ForeignKeyConstraint(['exam_id'], ['exams.id'], ),
+    sa.ForeignKeyConstraint(['exam_id'], ['exams.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['topic_id'], ['topics.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
