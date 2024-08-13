@@ -392,7 +392,7 @@ def submit_exam():
         if user_answer and user_answer == correct_answer:
             correct_answers += 1
     
-    # Calculate grade as a percentage
+    
     grade = (correct_answers / total_questions) * 100
     
     result = UserExamResult(user_id=user_id, exam_id=exam_id, grade=grade)
@@ -405,21 +405,20 @@ def add_exam():
     try:
         data = request.json
 
-        # Create the exam object
+       
         exam = Exams(
             exam_name=data['exam_name'],
             category=data['category'],
             subcategory=data['subcategory'],
             createdBy=data['createdBy'],
             createdOn=data['createdOn'],
-            exam_duration=data.get('exam_duration', 60),  # Default to 60 if not provided
-            examiner_id=str(uuid.uuid4())  # Replace with actual examiner ID if available
+            exam_duration=data.get('exam_duration', 60),  
+            examiner_id=str(uuid.uuid4()) 
         )
         
         db.session.add(exam)
-        db.session.flush()  # Flush to get the exam ID for the questions
+        db.session.flush()  
 
-        # Add the associated questions
         for question_data in data['questions']:
             question = Question(
                 question_text=question_data['question_text'],
@@ -439,9 +438,7 @@ def add_exam():
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': 'Failed to add exam', 'error': str(e)}), 500
-    
 
-    
 
 @app.route('/topics', methods=['POST'])
 def create_topic():
@@ -503,7 +500,6 @@ def update_topic(topic_id):
     if topic is None:
         return jsonify({"error": "Topic not found"}), 404
     
-    # Update topic fields
     topic.name = data.get('name', topic.name)
     topic.sub_category_id = UUID(data.get('sub_category_id', str(topic.sub_category_id)))
 
@@ -527,55 +523,295 @@ def delete_topic(topic_id):
     return jsonify({"message": "Topic deleted successfully"}), 200
 
 
-# @app.route('/questions', methods=['POST'])
-# def create_question():
-#     data = request.get_json()
-#     question = Question(
-#         question_text=data['question_text'],
-#         choice1=data.get('choice1'),
-#         choice2=data.get('choice2'),
-#         choice3=data.get('choice3'),
-#         choice4=data.get('choice4'),
-#         isChoice=data.get('isChoice', False),
-#         answer=data.get('answer'),
-#         topic_id=UUID(data['topic_id'])
-#     )
-#     db.session.add(question)
-#     db.session.commit()
-#     return jsonify(question.to_dict()), 201
-# @app.route('/questions/<uuid:question_id>', methods=['GET'])
-# def get_question(question_id):
-#     question = Question.query.get(question_id)
-#     if not question:
-#         return jsonify({'error': 'Question not found'}), 404
-#     return jsonify(question.to_dict())
+@app.route('/questions', methods=['GET', 'POST', 'PUT'])
+def manage_questions():
+    if request.method == 'GET':
+        # Fetch all questions
+        questions = Question.query.all()
+        questions_list = [question.to_dict() for question in questions]
+        return jsonify(questions_list)
 
-# @app.route('/questions', methods=['GET'])
-# def get_all_questions():
-#     try:
-#         questions = Question.query.all()
-#         questions_list = [question.to_dict() for question in questions]
-#         return jsonify(questions_list), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-@app.route("/userexamresults", methods=["POST"])
-def create_user_exam_result():
+    elif request.method == 'POST':
+        # Create a new question
+        data = request.get_json()
+
+        try:
+            # Convert string UUIDs to UUID objects, or set to None if not provided
+            topic_id = UUID(data['topic_id']) if data.get('topic_id') else None
+            exam_id = UUID(data['exam_id']) if data.get('exam_id') else None
+
+            # Create a new Question instance
+            new_question = Question(
+                question_text=data['question_text'],
+                choice1=data.get('choice1'),
+                choice2=data.get('choice2'),
+                choice3=data.get('choice3'),
+                choice4=data.get('choice4'),
+                isChoice=data.get('isChoice', False),
+                answer=data.get('answer'),
+                topic_id=topic_id,
+                exam_id=exam_id
+            )
+
+            db.session.add(new_question)
+            db.session.commit()
+
+            return jsonify({'message': 'Question created successfully'}), 201
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+
+    elif request.method == 'PUT':
+        data = request.get_json()
+
+        try:
+            question_id = UUID(data.get('id'))
+            question = Question.query.get(question_id)
+            if not question:
+                return jsonify({'error': 'Question not found'}), 404
+
+            question.question_text = data.get('question_text', question.question_text)
+            question.choice1 = data.get('choice1', question.choice1)
+            question.choice2 = data.get('choice2', question.choice2)
+            question.choice3 = data.get('choice3', question.choice3)
+            question.choice4 = data.get('choice4', question.choice4)
+            question.isChoice = data.get('isChoice', question.isChoice)
+            question.answer = data.get('answer', question.answer)
+            question.topic_id = UUID(data['topic_id']) if data.get('topic_id') else question.topic_id
+            question.exam_id = UUID(data['exam_id']) if data.get('exam_id') else question.exam_id
+
+            db.session.commit()
+            return jsonify({'message': 'Question updated successfully'}), 200
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+
+    return jsonify({'error': 'Method not allowed'}), 405
+
+@app.route('/questions/<uuid:question_id>', methods=['DELETE'])
+def delete_question(question_id):
+    try:
+        question = Question.query.get(question_id)
+        if not question:
+            return jsonify({'error': 'Question not found'}), 404
+
+        db.session.delete(question)
+        db.session.commit()
+
+        return jsonify({'message': 'Question deleted successfully'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500 
+    
+
+@app.route('/questions/<uuid:question_id>', methods=['GET'])
+def get_question_by_id(question_id):
+    question = Question.query.get(question_id)
+    if not question:
+        return jsonify({'error': 'Question not found'}), 404
+    return jsonify(question.to_dict())
+
+
+@app.route('/questions/<uuid:question_id>', methods=['PUT'])
+def update_question_by_id(question_id):
     data = request.get_json()
-    user_exam_result = UserExamResult(
-        user_id=data["user_id"],
-        # exam_id=data["exam_id"],
-        grade=data["grade"],
-    )
-    db.session.add(user_exam_result)
-    db.session.commit()
-    return jsonify(user_exam_result.to_dict()), 201
+    question = Question.query.get(question_id)
+    if not question:
+        return jsonify({'error': 'Question not found'}), 404
 
-@app.route("/userexamresults/<uuid:user_exam_result_id>", methods=["GET"])
-def get_user_exam_result(user_exam_result_id):
-    user_exam_result = UserExamResult.query.get(user_exam_result_id)
-    if not user_exam_result:
-        return jsonify({"error": "User Exam Result not found"}), 404
-    return jsonify(user_exam_result.to_dict())
+    try:
+        question.question_text = data.get('question_text', question.question_text)
+        question.choice1 = data.get('choice1', question.choice1)
+        question.choice2 = data.get('choice2', question.choice2)
+        question.choice3 = data.get('choice3', question.choice3)
+        question.choice4 = data.get('choice4', question.choice4)
+        question.isChoice = data.get('isChoice', question.isChoice)
+        question.answer = data.get('answer', question.answer)
+        question.topic_id = UUID(data['topic_id']) if data.get('topic_id') else question.topic_id
+        question.exam_id = UUID(data['exam_id']) if data.get('exam_id') else question.exam_id
+
+        db.session.commit()
+        return jsonify({'message': 'Question updated successfully'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error':str(e)}),500
+
+    
+
+    
+@app.route('/examcategories', methods=['GET'])
+def get_exam_categories():
+    categories = ExamCategory.query.all()
+    return jsonify([{
+        'id': category.id,
+        'name': category.name,
+        'description': category.description
+    } for category in categories]), 200
+
+
+@app.route('/examcategories/<uuid:id>', methods=['GET'])
+def get_exam_category(id):
+    category = ExamCategory.query.get_or_404(id)
+    return jsonify({
+        'id': category.id,
+        'name': category.name,
+        'description': category.description,
+        'subcategories': [{'id': sub.id, 'name': sub.name} for sub in category.subcategories]
+    }), 200
+
+
+@app.route('/examcategories', methods=['POST'])
+def create_exam_category():
+    data = request.get_json()
+    new_category = ExamCategory(
+        name=data['name'],
+        description=data.get('description', '')
+    )
+    db.session.add(new_category)
+    db.session.commit()
+    return jsonify({
+        'id': new_category.id,
+        'name': new_category.name,
+        'description': new_category.description
+    }), 201
+
+
+@app.route('/examcategories/<uuid:id>', methods=['PUT'])
+def update_exam_category(id):
+    category = ExamCategory.query.get_or_404(id)
+    data = request.get_json()
+    category.name = data.get('name', category.name)
+    category.description = data.get('description', category.description)
+    db.session.commit()
+    return jsonify({
+        'id': category.id,
+        'name': category.name,
+        'description': category.description
+    }), 200
+
+
+@app.route('/examcategories/<uuid:id>', methods=['DELETE'])
+def delete_exam_category(id):
+    category = ExamCategory.query.get_or_404(id)
+    
+    # Option 1: Set exam_category_id to NULL if allowed
+    # Uncomment if you want to set exam_category_id to NULL
+    # for sub in category.subcategories:
+    #     sub.exam_category_id = None
+
+    # Option 2: Delete associated subcategories
+    SubCategory.query.filter_by(exam_category_id=id).delete()
+
+    db.session.delete(category)
+    db.session.commit()
+    return jsonify({'message': 'Exam category deleted successfully'}), 204
+
+
+
+
+@app.route('/subcategories', methods=['GET'])
+def get_subcategories():
+    subcategories = SubCategory.query.all()
+    return jsonify([{
+        'id': sub.id,
+        'name': sub.name,
+        'exam_category_id': sub.exam_category_id
+    } for sub in subcategories]), 200
+
+
+@app.route('/subcategories/<uuid:id>', methods=['GET'])
+def get_subcategory(id):
+    subcategory = SubCategory.query.get_or_404(id)
+    return jsonify({
+        'id': subcategory.id,
+        'name': subcategory.name,
+        'exam_category_id': subcategory.exam_category_id
+    }), 200
+
+
+@app.route('/subcategories', methods=['POST'])
+def create_subcategory():
+    try:
+        data = request.get_json()
+        name = data.get('name')
+        exam_category_id = data.get('exam_category_id')
+
+        # Ensure the exam_category_id is a valid UUID
+        try:
+            exam_category_id = UUID(exam_category_id)
+        except ValueError:
+            return jsonify({"error": "Invalid exam_category_id format."}), 400
+
+        # Create a new SubCategory instance
+        new_subcategory = SubCategory(
+            name=name,
+            exam_category_id=exam_category_id
+        )
+
+        # Add to the session and commit
+        db.session.add(new_subcategory)
+        db.session.commit()
+
+        return jsonify({
+            'id': str(new_subcategory.id),
+            'name': new_subcategory.name,
+            'exam_category_id': str(new_subcategory.exam_category_id)
+        }), 201
+
+    except Exception as e:
+        return jsonify({"error": "An error occurred."}), 500
+
+
+
+@app.route('/subcategories/<uuid:id>', methods=['PUT'])
+def update_subcategory(id):
+    try:
+        subcategory = SubCategory.query.get_or_404(id)
+        
+        data = request.get_json()
+        name = data.get('name')
+        exam_category_id = data.get('exam_category_id')
+
+        if name:
+            subcategory.name = name
+
+        if exam_category_id:
+            subcategory.exam_category_id = UUID(exam_category_id)  # Convert string to UUID
+
+        db.session.commit()
+
+        return jsonify({
+            'id': str(subcategory.id),
+            'name': subcategory.name,
+            'exam_category_id': str(subcategory.exam_category_id)
+        }), 200
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "An error occurred."}), 500
+
+
+@app.route('/subcategories/<uuid:id>', methods=['DELETE'])
+def delete_subcategory(id):
+    try:
+        subcategory = SubCategory.query.get_or_404(id)
+        db.session.delete(subcategory)
+        db.session.commit()
+
+        return jsonify({"message": "Subcategory deleted successfully."}), 200
+
+    except Exception as e:
+        return jsonify({"error": "An error occurred."}), 500
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5555)
