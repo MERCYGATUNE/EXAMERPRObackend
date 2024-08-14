@@ -457,19 +457,6 @@ def update_subcategory(sub_category_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-@app.route('/subcategories/<uuid:sub_category_id>', methods=['DELETE'])
-def delete_subcategory(sub_category_id):
-    sub_category = SubCategory.query.get(sub_category_id)
-    if not sub_category:
-        return jsonify({"error": "Subcategory not found"}), 404
-
-    db.session.delete(sub_category)
-    try:
-        db.session.commit()
-        return jsonify({"message": "Subcategory deleted successfully"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
     
 @app.route('/topics', methods=['GET'])
 def get_topics():
@@ -853,6 +840,180 @@ def get_exam(exam_id):
     except Exception as e:
         print(e)
         return jsonify({'error': 'Something went wrong', 'message': str(e)}), 500
+    
+@app.route('/all_categories', methods=['GET'])
+def get_all_categories():
+    categories = ExamCategory.query.all()
+    return jsonify([{
+        'id': category.id,
+        'name': category.name,
+        'description': category.description,
+        'subcategories' : [{
+            'id': subcategory.id,
+            'name': subcategory.name,
+            'exam_category_id': subcategory.exam_category_id,
+            'topics': [{
+                'id': topic.id,
+                'name': topic.name
+            } for topic in subcategory.topics]
+        }for subcategory in category.subcategories]
+    } for category in categories]), 200
+
+@app.route('/add_category', methods=['POST'])
+def add_category():
+    try:
+        data = request.json
+        category = ExamCategory( name=data['name'],)
+        db.session.add(category)
+        db.session.commit()
+        return jsonify({'message': 'Category added successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'message': 'Failed to add category'})
+    
+@app.route('/delete_category', methods=['DELETE'])
+def delete_category():
+    try:
+        data = request.json
+        category_id = data['category_id']
+        category_uuid = UUID(category_id, version=4)
+        category = ExamCategory.query.get(category_uuid)
+        if not category:
+            return jsonify({'error': 'Category not found'}), 404
+        db.session.delete(category)
+        db.session.commit()
+        return jsonify({'message': 'Category deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'message': 'Failed to delete category'}), 500
+    
+@app.route('/edit_category', methods=['PATCH'])
+def update_category():
+    try:
+        data = request.json
+        category_id = data['category_id']
+        category_uuid = UUID(category_id, version=4)
+        category = ExamCategory.query.get(category_uuid)
+        if not category:
+            return jsonify({'error': 'Category not found'}), 404
+        if 'name' in data:
+            category.name = data['name']
+        db.session.commit()
+        return jsonify({'message': 'Category updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'message': 'Failed to update category'}), 500
+
+@app.route('/add_subcategory', methods=['POST'])
+def add_subcategory():
+    try:
+        data = request.json
+        category_id = data['category_id']
+        category_uuid = UUID(category_id, version=4)
+        category = ExamCategory.query.get(category_uuid)
+        if not category:
+            return jsonify({'error': 'Category not found'}), 404
+        subcategory = SubCategory(name=data['name'], exam_category_id=category.id)
+        db.session.add(subcategory)
+        db.session.commit()
+        return jsonify({'message': 'Subcategory added successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'message': 'Failed to add subcategory'}), 500
+
+@app.route('/edit_subcategory', methods=['PATCH'])
+def edit_subcategory():
+    try:
+        data = request.json
+        subcategory_id = data['subcategory_id']
+        subcategory_uuid = UUID(subcategory_id, version=4)
+        subcategory = SubCategory.query.get(subcategory_uuid)
+        if not subcategory:
+            return jsonify({'error': 'Subcategory not found'}), 404
+        if 'name' in data:
+            subcategory.name = data['name']
+        db.session.commit()
+        return jsonify({'message': 'Subcategory updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'message': 'Failed to update subcategory'}), 500
+    
+@app.route('/delete_subcategory', methods=['DELETE'])
+def delete_subcategory():
+    try:
+        data = request.json
+        subcategory_id = data['subcategory_id']
+        subcategory_uuid = UUID(subcategory_id, version=4)
+        subcategory = SubCategory.query.get(subcategory_uuid)
+        if not subcategory:
+            return jsonify({'error': 'Subcategory not found'}), 404
+        db.session.delete(subcategory)
+        db.session.commit()
+        return jsonify({'message': 'Subcategory deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'message': 'Failed to delete subcategory'}), 500
+
+@app.route('/add_topic', methods=['POST'])
+def add_topic():
+    try:
+        data = request.json
+        subcategory_id = data['subcategory_id']
+        subcategory_uuid = UUID(subcategory_id, version=4)
+        subcategory = SubCategory.query.get(subcategory_uuid)
+        if not subcategory:
+            return jsonify({'error': 'Subcategory not found'}), 404
+        topic = Topic(name=data['name'], sub_category_id=subcategory.id)
+        db.session.add(topic)
+        db.session.commit()
+        return jsonify({'message': 'Topic added successfully'}), 200
+    except:
+        db.session.rollback()
+        return jsonify({'message': 'Failed to add topic'}), 500
+    
+@app.route('/edit_topic', methods=['PATCH'])
+def edit_topic():
+    try:
+        data = request.json
+        topic_id = data['topic_id']
+        topic_uuid = UUID(topic_id, version=4)
+        topic = Topic.query.get(topic_uuid)
+        if not topic:
+            return jsonify({'error': 'Topic not found'}), 404
+        if 'name' in data:
+            topic.name = data['name']
+        db.session.commit()
+        return jsonify({'message': 'Topic updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'message': 'Failed to update topic'}), 500
+    
+@app.route('/delete_topic', methods=['DELETE'])
+def delete_topic():
+    try:
+        data = request.json
+        topic_id = data['topic_id']
+        topic_uuid = UUID(topic_id, version=4)
+        topic = Topic.query.get(topic_uuid)
+        if not topic:
+            return jsonify({'error': 'Topic not found'}), 404
+        db.session.delete(topic)
+        db.session.commit()
+        return jsonify({'message': 'Topic deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'message': 'Failed to delete topic'}), 500
+
+
+
 
 @app.route('/get_all_exam_uuids')
 def get_all_exam_uuids():
