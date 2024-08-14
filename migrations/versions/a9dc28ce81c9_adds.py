@@ -1,8 +1,8 @@
-"""Add cascade delete to Exam-Question relationship
+"""adds
 
-Revision ID: 015337ba51c4
+Revision ID: a9dc28ce81c9
 Revises: 
-Create Date: 2024-08-13 10:36:03.945763
+Create Date: 2024-08-14 20:46:58.411205
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '015337ba51c4'
+revision = 'a9dc28ce81c9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -52,7 +52,7 @@ def upgrade():
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=True),
     sa.Column('exam_category_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['exam_category_id'], ['examcategory.id'], ),
+    sa.ForeignKeyConstraint(['exam_category_id'], ['examcategory.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('subscription',
@@ -67,10 +67,11 @@ def upgrade():
     )
     op.create_table('topics',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('name', sa.String(), nullable=True),
+    sa.Column('name', sa.String(), nullable=False),
     sa.Column('sub_category_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['sub_category_id'], ['subcategory.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['sub_category_id'], ['subcategory.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
     )
     op.create_table('user_exam_result',
     sa.Column('id', sa.UUID(), nullable=False),

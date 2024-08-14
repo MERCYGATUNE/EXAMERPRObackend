@@ -21,7 +21,7 @@ class User(db.Model):
     referral_code = Column(String)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    subscriptions = relationship("Subscription", back_populates="user", cascade='all, delete')
+    subscriptions = relationship("Subscription", backref="user", cascade="all, delete-orphan")
     exams = relationship("Exams", backref="user", cascade="all, delete-orphan", passive_deletes=True)
 
 class Subscription(db.Model):
@@ -33,13 +33,12 @@ class Subscription(db.Model):
     expires_at = Column(DateTime)
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     
-    user = relationship("User", back_populates="subscriptions")
 
 class Topic(db.Model):
     __tablename__ = 'topics'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String)
-    sub_category_id = Column(UUID(as_uuid=True), ForeignKey('subcategory.id'),nullable=False)
+    name = Column(String, unique=True, nullable=False)
+    sub_category_id = Column(UUID(as_uuid=True), ForeignKey('subcategory.id', ondelete="CASCADE"),nullable=False)
 
     def to_dict(self):
         return {
@@ -48,23 +47,23 @@ class Topic(db.Model):
             'sub_category': str(self.sub_category)
         }
     
-    questions = relationship('Question', backref='topic')
+    questions = relationship('Question', backref='topic', cascade="all, delete-orphan")
 
 class SubCategory(db.Model):
     __tablename__ = 'subcategory'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String)
-    exam_category_id = Column(UUID(as_uuid=True), ForeignKey('examcategory.id'), nullable=False)
+    exam_category_id = Column(UUID(as_uuid=True), ForeignKey('examcategory.id',ondelete="CASCADE"), nullable=False)
 
-    topics = relationship('Topic', backref='subcategory')
+    topics = relationship('Topic', backref='subcategory', cascade="all, delete-orphan")
 
 class ExamCategory(db.Model):
     __tablename__ = 'examcategory'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String)
-    description = Column(Text)
+    description = Column(Text,  nullable=True)
 
-    subcategories = relationship('SubCategory', backref='examcategory')
+    subcategories = relationship('SubCategory', backref='examcategory', cascade="all, delete-orphan")
 
 class Exams(db.Model):
     __tablename__ = 'exams'
