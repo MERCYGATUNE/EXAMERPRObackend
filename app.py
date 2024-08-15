@@ -509,7 +509,7 @@ def create_topic():
     try:
         db.session.commit()
         return jsonify({
-            'id': str(new_topic.id),  # Convert UUID to string for JSON response
+            'id': str(new_topic.id),  
             'name': new_topic.name,
             'description': new_topic.description,
             'user_id': str(new_topic.user_id),  # Convert UUID to string for JSON response
