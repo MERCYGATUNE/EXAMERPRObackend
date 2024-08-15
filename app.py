@@ -724,6 +724,8 @@ def add_exam():
 
         # Add the associated questions
         for question_data in data['questions']:
+            topic = Topic.query.filter_by(name=question_data.get('topic')).first()
+            topic_id = topic.id
             question = Question(
                 question_text=question_data['question_text'],
                 choice1=question_data.get('choice1', ''),
@@ -732,7 +734,8 @@ def add_exam():
                 choice4=question_data.get('choice4', ''),
                 isChoice=question_data['isChoice'],
                 answer=question_data['answer'],
-                exam_id=exam.id
+                exam_id=exam.id,
+                topic_id=topic_id
             )
             db.session.add(question)
 
