@@ -10,6 +10,7 @@ flask-cors==4.0.1
 flask-mail==0.10.0; python_version >= '3.8'
 gunicorn==22.0.0; python_version >= '3.7'
 flask-migrate==4.0.7; python_version >= '3.6'
+psycopg2-binary==2.9.9; python_version >= '3.7'
 flask-sqlalchemy==3.1.1; python_version >= '3.8'
 idna==3.7; python_version >= '3.5'
 itsdangerous==2.2.0; python_version >= '3.8'
