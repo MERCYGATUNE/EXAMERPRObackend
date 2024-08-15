@@ -52,7 +52,7 @@ def send_email(to, subject, body):
     msg.body = body
     mail.send(msg)
 
-CORS(app)
+CORS(app, resources={r"/*": {"origins" : "http://localhost:3000"}})
 
 db.init_app(app)
 migrate.init_app(app, db)
