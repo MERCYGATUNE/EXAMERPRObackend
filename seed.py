@@ -20,6 +20,22 @@ def seed_database():
 
     db.session.commit()
 
+    #Addis Steve as administrator
+    password = '123'
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    admin = User(
+        id=uuid.uuid4(),
+        username='steve',
+        email='steve@gmail.com',
+        password=hashed_password.decode('utf-8'),
+        confirmed_email=True,
+        role='admin',
+        referral_code=fake.uuid4(),
+        created_at=datetime.now()
+    )
+    db.session.add(admin)
+    db.session.commit()
+
     # Users
     for _ in range(10):
         password = fake.password()
