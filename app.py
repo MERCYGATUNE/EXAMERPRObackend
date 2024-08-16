@@ -810,8 +810,27 @@ def delete_exam():
         db.session.rollback()
         print(e)
         return jsonify({'message': 'Failed to delete exam', 'error': str(e)}), 500
-
-
+    
+@app.route('/get_exam_for_examiner/<examiner_id>', methods=['GET'])
+def get_exam_for_examiner(examiner_id):
+    try:
+        examiner_uuid = UUID(examiner_id, version=4)
+        examiner_exams = Exams.query.filter_by(examiner_id=examiner_uuid).all()
+        return{
+            'examiner_id': str(examiner_id),
+            'examiner_exams': [
+                {
+                    'id': str(exam.id),  # Ensure UUID is converted to string
+                    'exam_name': exam.exam_name,
+                    'category': exam.category,
+                   'subcategory': exam.subcategory,
+                    
+                } for exam in examiner_exams
+            ]
+        }
+    except Exception as e:
+        print(e)
+        return jsonify({'error': 'Something went wrong', 'message': str(e)}), 500
 
 @app.route('/get_exam/<exam_id>', methods=['GET'])
 def get_exam(exam_id):
@@ -1016,6 +1035,32 @@ def delete_topic():
         db.session.rollback()
         print(e)
         return jsonify({'message': 'Failed to delete topic'}), 500
+
+@app.route('/get_submissions/<examiner_id>', methods=['GET'])
+def get_submissions(examiner_id):
+    try:
+        examiner_uuid = UUID(examiner_id, version=4)
+        exams = Exams.query.filter_by(examiner_id=examiner_uuid).all()
+        submissions = []
+        for exam in exams:
+            results = UserExamResult.query.filter_by(exam_id=exam.id).all()
+            for result in results:
+                user = User.query.filter_by(id = result.user_id).first()
+                submission = {
+                    'exam_id': str(exam.id),
+                    'user_id': str(user.id),
+                    'user_name': user.name,
+                    'exam_name': exam.exam_name,
+                    'exam_category': exam.exam_category,
+                    'grade': result.grade,
+                }
+                submissions.append(submission)
+        return jsonify(submissions), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'error': 'Something went wrong', 'message': str(e)}), 500
+            
+
 
 
 
